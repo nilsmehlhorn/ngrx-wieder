@@ -1,0 +1,25 @@
+{
+  "name": "ngrx-wieder",
+  "version": "0.0.1",
+  "author": "Nils Melhorn <mail@nils-mehlhorn.de> (https://nils-mehlhorn.de)",
+  "description": "Lightweight undo-redo for NgRx",
+  "homepage": "https://github.com/nilsmehlhorn/ngrx-wieder",
+  "keywords": ["undo", "redo", "angular", "ngrx", "immer", "typescript", "javascript"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nilsmehlhorn/ngrx-wieder.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nilsmehlhorn/ngrx-wieder/issues"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "fp-ts": "^1.14.2"
+  },
+  "peerDependencies": {
+    "@angular/common": "^7.2.0",
+    "@angular/core": "^7.2.0",
+    "@ngrx/store": "^7.2.0",
+    "immer": "^2.0.0"
+  }
+}

@@ -1,0 +1,84 @@
+import {Action, ActionReducer} from '@ngrx/store'
+import {Patch, PatchListener} from 'immer'
+
+/**
+ * Reducer extension for capturing patches from immer.
+ */
+export interface PatchActionReducer<T, V extends Action = Action> extends ActionReducer<T, V> {
+  (state: T | undefined, action: V, patchListener: PatchListener): T
+}
+
+/**
+ * Wrapper for patches between two different states.
+ */
+export interface Patches {
+  patches: Patch[]
+  inversePatches: Patch[]
+}
+
+/**
+ * Predicate for deciding whether differences from
+ * two consecutive actions of the same type should be merged.
+ */
+export type MergeRule = (a: Action, b: Action) => boolean
+
+/**
+ * Configuration for undoRedo reducer.
+ */
+export interface WiederConfig {
+  /**
+   * How many state differences should be buffered in
+   * either direction.
+   */
+  maxBufferSize?: number
+  /**
+   * Types of actions to use for calculating patches
+   * between states.
+   */
+  allowedActionTypes?: string[]
+  /**
+   * Types of actions whose state difference should be
+   * merged when they appear consecutively
+   */
+  mergeActionTypes?: string[]
+  /**
+   * Predicates for deciding whether differences from
+   * two consecutive actions of the same type should be merged.
+   */
+  mergeRules?: Map<string, MergeRule>
+  /**
+   * Optional override for the undo action's type.
+   */
+  undoActionType?: string
+  /**
+   * Optional override for the redo action's type.
+   */
+  redoActionType?: string
+  /**
+   * Optional override for the confirm-merge action's type.
+   */
+  confirmMergeActionType?: string
+  /**
+   * Optional override for the clear action's type.
+   */
+  clearActionType?: string
+  /**
+   * Whether ability for undo/redo should be tracked in the state
+   * through properties `canUndo` and `canRedo`.
+   */
+  track?: boolean
+}
+
+export const defaultConfig: WiederConfig = {
+  allowedActionTypes: [],
+  mergeActionTypes: [],
+  mergeRules: new Map<string, MergeRule>(),
+  maxBufferSize: 32,
+  undoActionType: 'UNDO',
+  redoActionType: 'REDO',
+  confirmMergeActionType: 'CONFIRM_MERGE',
+  clearActionType: 'CLEAR',
+  track: false
+}
+
+
