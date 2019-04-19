@@ -3,7 +3,7 @@ import {applyPatches} from 'immer'
 import {fromNullable} from 'fp-ts/lib/Option'
 import {defaultConfig, PatchActionReducer, Patches, WiederConfig} from './model'
 
-const undoReducer = <T>(reducer: PatchActionReducer<T>, config: WiederConfig): ActionReducer<T> => {
+const undoReducer = <T>(reducer: PatchActionReducer<T>, config: WiederConfig = {}): ActionReducer<T> => {
 
   const {
     allowedActionTypes,
