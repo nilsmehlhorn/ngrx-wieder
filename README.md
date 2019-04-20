@@ -29,8 +29,8 @@ so that it can forward the patches from immer:
 
 **Before**
 ```
-const reducer = (state, action: Actions): Graph =>
-  produce(graph, nextGraph => {
+const reducer = (state: State, action: Actions): State =>
+  produce(state, nextState => {
     switch (action.type) {
     /* action handling */
     }
@@ -39,8 +39,8 @@ const reducer = (state, action: Actions): Graph =>
 
 **After**
 ```
-const reducer = (state, action: Actions, patchListener?: PatchListener): Graph =>
-  produce(graph, nextGraph => {
+const reducer = (state: State, action: Actions, patchListener?: PatchListener): State =>
+  produce(state, nextState => {
     switch (action.type) {
     /* action handling */
     }
@@ -65,8 +65,8 @@ const undoable = undoRedo({
 const undoableReducer = undoable(reducer)
 
 // wrap into exported function to keep Angular AOT working
-export function myReducer(graph = initialState, action: Actions) {
-  return undoableReducer(graph, action)
+export function myReducer(state = initialState, action: Actions) {
+  return undoableReducer(state, action)
 }
 ```
 
@@ -79,7 +79,17 @@ this._store.dispatch({{ type: 'REDO' }})
 
 ### Configuration
 
-*todo*
+| Option | Default | Description
+|:---  |:--- | :---
+| `allowedActionTypes`| `[]` |Actions applicable for being undone/redon (leave empty to allow all actions)
+| `mergeActionTypes`| `[]` | Types of actions whose state difference should be merged when they appear consecutively
+| `mergeRules`| `new Map()` |Predicates for deciding whether differences from consecutive actions of the same type should be merged
+| `maxBufferSize`| `32` | How many state differences should be buffered in either direction
+| `undoActionType`| `'UNDO'` | Override for the undo action's type
+| `redoActionType`| `'REDO'` | Override for the redo action's type
+| `confirmMergeActionType`| `'CONFIRM_MERGE'` |Override for the confirm-merge action's type.
+| `clearActionType`| `'CLEAR'` | Override for the clear action's type
+| `track`| `false` | Whether ability for undo/redo should be tracked in the state through properties `canUndo` and `canRedo`
 
 ### Dealing with consecutive changes
 

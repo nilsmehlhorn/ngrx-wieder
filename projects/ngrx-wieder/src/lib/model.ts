@@ -33,7 +33,7 @@ export interface WiederConfig {
   maxBufferSize?: number
   /**
    * Types of actions to use for calculating patches
-   * between states.
+   * between states (leave empty to allow all actions).
    */
   allowedActionTypes?: string[]
   /**
@@ -47,19 +47,19 @@ export interface WiederConfig {
    */
   mergeRules?: Map<string, MergeRule>
   /**
-   * Optional override for the undo action's type.
+   * Override for the undo action's type.
    */
   undoActionType?: string
   /**
-   * Optional override for the redo action's type.
+   * Override for the redo action's type.
    */
   redoActionType?: string
   /**
-   * Optional override for the confirm-merge action's type.
+   * Override for the confirm-merge action's type.
    */
   confirmMergeActionType?: string
   /**
-   * Optional override for the clear action's type.
+   * Override for the clear action's type.
    */
   clearActionType?: string
   /**
