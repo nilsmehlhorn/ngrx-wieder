@@ -22,7 +22,8 @@ const undoReducer = <T>(reducer: PatchActionReducer<T>, config: WiederConfig = {
   let lastAction: Action
   let mergeConfirmed = false
 
-  const isUndoable = (action: Action) => allowedActionTypes.some(type => type === action.type)
+  const isUndoable = (action: Action) => !allowedActionTypes.length ||
+    allowedActionTypes.some(type => type === action.type)
   const shouldMerge = (a: Action, b: Action): boolean => {
     return !mergeConfirmed && a.type === b.type
       && (
