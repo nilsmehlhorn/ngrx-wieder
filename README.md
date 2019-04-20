@@ -8,7 +8,7 @@ Make sure you're using immer to update your NgRx (sub-)state.
 ## Installation
 
 Install via
-```
+```bash
 npm i -S ngrx-wieder
 ```
 
@@ -28,7 +28,7 @@ ngrx-wieder record the changes your reducer has to be adapted
 so that it can forward the patches from immer:
 
 **Before**
-```
+```ts
 const reducer = (state: State, action: Actions): State =>
   produce(state, nextState => {
     switch (action.type) {
@@ -38,7 +38,7 @@ const reducer = (state: State, action: Actions): State =>
 ```
 
 **After**
-```
+```ts
 const reducer = (state: State, action: Actions, patchListener?: PatchListener): State =>
   produce(state, nextState => {
     switch (action.type) {
@@ -50,7 +50,7 @@ const reducer = (state: State, action: Actions, patchListener?: PatchListener): 
 Next you'll configure the undo-redo behaviour by instantiating `undoRedo` and wrapping
 your custom reducer inside the `undoable` meta-reducer.
 
-```
+```ts
 import {undoRedo} from 'ngrx-wieder'
 
 const undoable = undoRedo({
@@ -72,7 +72,7 @@ export function myReducer(state = initialState, action: Actions) {
 
 Then whenever you'd like to undo or redo one of the passed `allowedActionTypes` simply dispatch
 the corresponding actions:
-```
+```ts
 this._store.dispatch({{ type: 'UNDO' }})
 this._store.dispatch({{ type: 'REDO' }})
 ```
@@ -93,4 +93,48 @@ this._store.dispatch({{ type: 'REDO' }})
 
 ### Dealing with consecutive changes
 
-*todo*
+Sometimes you want to enable undo/redo in broader chunks than the ones you actually use for
+transforming your state. Take a range input for example:
+
+```ts
+@Component({
+  selector: 'my-slider',
+  template: `
+    <input #rangeIn type="range" id="rangeIn" min="0" max="10" step="1" 
+      (change)="rangeChange()" (input)="rangeInput(rangeIn.value)">
+  `
+})
+export class SliderComponent {
+
+  // ...
+
+  rangeChange() {
+    console.log('done')
+  }
+
+  rangeInput(count: number) {
+    console.log('count: ', count)
+    this.store.dispatch(new CountChange({count})
+  }
+}
+```
+
+The method `rangeInput` will be called for any step that the slider is moved by the user. This method
+may also dispatch action to update the state and thus display the result of moving the slider somehow.
+When the user wants to revert changing the range input, he'd have to retrace every single step that
+he moved the slider. Instead a more expectable redo behaviour would place the slider back where the
+user picked it up before. To facilitate this you can specify the `CountChange` action as an action
+whose state changes are merged consecutively by passing its type to the configuration property 
+`mergeActionTypes` (you can even get more fine grained by using predicates through the `mergeRules` property).
+In order to break the merging between consecutively merged action types you can dispatch a special action:
+```ts
+this._store.dispatch({{ type: 'CONFIRM_MERGE' }})
+```
+Staying with the example you'd want to do this in the `rangeChange` callback.
+
+### Clearing the undo/redo stack
+
+You can clear the stack for undoable and redoable actions by dispatching a special clearing action:
+```ts
+this._store.dispatch({{ type: 'CLEAR' }})
+```
