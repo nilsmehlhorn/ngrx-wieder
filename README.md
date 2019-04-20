@@ -73,15 +73,15 @@ export function myReducer(state = initialState, action: Actions) {
 Then whenever you'd like to undo or redo one of the passed `allowedActionTypes` simply dispatch
 the corresponding actions:
 ```ts
-this._store.dispatch({{ type: 'UNDO' }})
-this._store.dispatch({{ type: 'REDO' }})
+this.store.dispatch({ type: 'UNDO' })
+this.store.dispatch({ type: 'REDO' })
 ```
 
 ### Configuration
 
 | Option | Default | Description
 |:---  |:--- | :---
-| `allowedActionTypes`| `[]` |Actions applicable for being undone/redon (leave empty to allow all actions)
+| `allowedActionTypes`| `[]` |Actions applicable for being undone/redone (leave empty to allow all actions)
 | `mergeActionTypes`| `[]` | Types of actions whose state difference should be merged when they appear consecutively
 | `mergeRules`| `new Map()` |Predicates for deciding whether differences from consecutive actions of the same type should be merged
 | `maxBufferSize`| `32` | How many state differences should be buffered in either direction
@@ -114,21 +114,23 @@ export class SliderComponent {
 
   rangeInput(count: number) {
     console.log('count: ', count)
-    this.store.dispatch(new CountChange({count})
+    this.store.dispatch(new CountChange({ count })
   }
 }
 ```
 
 The method `rangeInput` will be called for any step that the slider is moved by the user. This method
-may also dispatch action to update the state and thus display the result of moving the slider somehow.
-When the user wants to revert changing the range input, he'd have to retrace every single step that
+may also dispatch an action to update the state and thus display the result of moving the slider.
+When the user now wants to revert changing the range input, he'd have to retrace every single step that
 he moved the slider. Instead a more expectable redo behaviour would place the slider back where the
 user picked it up before. To facilitate this you can specify the `CountChange` action as an action
 whose state changes are merged consecutively by passing its type to the configuration property 
 `mergeActionTypes` (you can even get more fine grained by using predicates through the `mergeRules` property).
-In order to break the merging between consecutively merged action types you can dispatch a special action:
+In order to break the merging at some point you can dispatch a special action:
 ```ts
-this._store.dispatch({{ type: 'CONFIRM_MERGE' }})
+  rangeChange() {
+    this.store.dispatch({ type: 'CONFIRM_MERGE' })
+  }
 ```
 Staying with the example you'd want to do this in the `rangeChange` callback.
 
@@ -136,5 +138,5 @@ Staying with the example you'd want to do this in the `rangeChange` callback.
 
 You can clear the stack for undoable and redoable actions by dispatching a special clearing action:
 ```ts
-this._store.dispatch({{ type: 'CLEAR' }})
+this.store.dispatch({ type: 'CLEAR' })
 ```
