@@ -178,16 +178,16 @@ describe('UndoRedo Reducer', () => {
     expect(undoneState.mood).toEqual(20)
   })
 
-  it('should intersect merges upon confirm action', () => {
+  it('should break merging upon break action', () => {
     const redoReducer = undoRedo({
       mergeActionTypes: [incrementMood.type]
     })(testReducer)
-    const intersectedState = redoReducer(redoReducer(initial,
+    const intersectedState = redoReducer(redoReducer(redoReducer(initial,
       incrementMood()),
-      incrementMood())
+      incrementMood()),
+      {type: 'BREAK_MERGE'})
     expect(intersectedState.mood).toEqual(40)
-    const confirmedState = redoReducer(intersectedState, {type: 'CONFIRM_MERGE'})
-    const doneState = redoReducer(redoReducer(redoReducer(confirmedState,
+    const doneState = redoReducer(redoReducer(redoReducer(intersectedState,
       incrementMood()),
       incrementMood()),
       incrementMood())

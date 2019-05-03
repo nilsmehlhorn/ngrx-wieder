@@ -87,7 +87,7 @@ this.store.dispatch({ type: 'REDO' })
 | `maxBufferSize`| `32` | How many state differences should be buffered in either direction
 | `undoActionType`| `'UNDO'` | Override for the undo action's type
 | `redoActionType`| `'REDO'` | Override for the redo action's type
-| `confirmMergeActionType`| `'CONFIRM_MERGE'` |Override for the confirm-merge action's type.
+| `breakMergeActionType`| `'BREAK_MERGE'` | Override for the break-merge action's type.
 | `clearActionType`| `'CLEAR'` | Override for the clear action's type
 | `track`| `false` | Whether ability for undo/redo should be tracked in the state through properties `canUndo` and `canRedo`
 
@@ -129,7 +129,7 @@ whose state changes are merged consecutively by passing its type to the configur
 In order to break the merging at some point you can dispatch a special action:
 ```ts
   rangeChange() {
-    this.store.dispatch({ type: 'CONFIRM_MERGE' })
+    this.store.dispatch({ type: 'BREAK_MERGE' })
   }
 ```
 Staying with the example you'd want to do this in the `rangeChange` callback.

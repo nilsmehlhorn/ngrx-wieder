@@ -12,7 +12,7 @@ const undoReducer = <T>(reducer: PatchActionReducer<T>, config: WiederConfig = {
     maxBufferSize,
     undoActionType,
     redoActionType,
-    confirmMergeActionType,
+    breakMergeActionType,
     clearActionType,
     track
   } = {...defaultConfig, ...config}
@@ -20,12 +20,12 @@ const undoReducer = <T>(reducer: PatchActionReducer<T>, config: WiederConfig = {
   let undoable: Patches[] = []
   let undone: Patches[] = []
   let lastAction: Action
-  let mergeConfirmed = false
+  let mergeBroken = false
 
   const isUndoable = (action: Action) => !allowedActionTypes.length ||
     allowedActionTypes.some(type => type === action.type)
   const shouldMerge = (a: Action, b: Action): boolean => {
-    return !mergeConfirmed && a.type === b.type
+    return !mergeBroken && a.type === b.type
       && (
         mergeActionTypes.includes(a.type)
         || (fromNullable(mergeRules.get(a.type)).map(r => r(a, b)).getOrElse(false))
@@ -61,12 +61,12 @@ const undoReducer = <T>(reducer: PatchActionReducer<T>, config: WiederConfig = {
       case clearActionType: {
         undone = []
         undoable = []
-        mergeConfirmed = false
+        mergeBroken = false
         lastAction = null
         return applyTracking(reducer(state, action))
       }
-      case confirmMergeActionType: {
-        mergeConfirmed = true
+      case breakMergeActionType: {
+        mergeBroken = true
         return state
       }
       default: {
@@ -90,7 +90,7 @@ const undoReducer = <T>(reducer: PatchActionReducer<T>, config: WiederConfig = {
                 ])
               undone = [] // clear redo stack
               lastAction = action // clear redo stack
-              mergeConfirmed = false
+              mergeBroken = false
             }
           }))
         }

@@ -55,9 +55,9 @@ export interface WiederConfig {
    */
   redoActionType?: string
   /**
-   * Override for the confirm-merge action's type.
+   * Override for the break-merge action's type.
    */
-  confirmMergeActionType?: string
+  breakMergeActionType?: string
   /**
    * Override for the clear action's type.
    */
@@ -76,7 +76,7 @@ export const defaultConfig: WiederConfig = {
   maxBufferSize: 32,
   undoActionType: 'UNDO',
   redoActionType: 'REDO',
-  confirmMergeActionType: 'CONFIRM_MERGE',
+  breakMergeActionType: 'BREAK_MERGE',
   clearActionType: 'CLEAR',
   track: false
 }
