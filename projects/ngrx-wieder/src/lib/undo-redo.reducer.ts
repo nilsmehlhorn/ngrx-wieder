@@ -47,14 +47,14 @@ const undoReducer = <T>(reducer: PatchActionReducer<T>, config: WiederConfig = {
       case undoActionType: {
         return fromNullable(undoable.shift()) // take patches from last undone action
           .map(patches => {
-            undone.unshift(patches) // put patches on redo stack
+            undone = [patches].concat(undone) // put patches on redo stack (Array.shift somehow breaks with AOT)
             return applyTracking(applyPatches(state, patches.inversePatches)) // reverse patches
           }).getOrElse(state)
       }
       case redoActionType: {
         return fromNullable(undone.shift()) // take patches from last undone action
           .map(patches => {
-            undoable.unshift(patches) // put patches on undo stack
+            undoable = [patches].concat(undoable) // put patches on undo stack (Array.shift somehow breaks with AOT)
             return applyTracking(applyPatches(state, patches.patches)) // reverse patches
           }).getOrElse(state)
       }
