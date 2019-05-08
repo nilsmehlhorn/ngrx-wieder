@@ -1,6 +1,8 @@
 ngrx-wieder is a lightweight yet configurable solution for implementing undo-redo in Angular apps on top of [NgRx](https://ngrx.io/).
 It's based on [immer](https://github.com/immerjs/immer) hence the name wieder (German for: again)
 
+⚡ Demo StackBlitz: https://stackblitz.com/edit/ngrx-wieder-app
+
 ## Prerequisites
 
 Make sure you're using immer to update your NgRx (sub-)state.
