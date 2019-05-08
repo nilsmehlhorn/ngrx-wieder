@@ -31,6 +31,8 @@ so that it can forward the patches from immer:
 
 **Before**
 ```ts
+import {produce} from 'immer'
+
 const reducer = (state: State, action: Actions): State =>
   produce(state, nextState => {
     switch (action.type) {
@@ -41,6 +43,8 @@ const reducer = (state: State, action: Actions): State =>
 
 **After**
 ```ts
+import {produce, PatchListener} from 'immer'
+
 const reducer = (state: State, action: Actions, patchListener?: PatchListener): State =>
   produce(state, nextState => {
     switch (action.type) {
@@ -55,16 +59,14 @@ your custom reducer inside the `undoable` meta-reducer.
 ```ts
 import {undoRedo} from 'ngrx-wieder'
 
-const undoable = undoRedo({
+// wrap reducer inside meta-reducer to make it undoable
+const undoableReducer = undoRedo({
   allowedActionTypes: [
     ActionTypes.Add,
     ActionTypes.Remove,
     ActionTypes.Select
   ]
-})
-
-// wrap reducer inside meta-reducer to make it undoable
-const undoableReducer = undoable(reducer)
+})(reducer)
 
 // wrap into exported function to keep Angular AOT working
 export function myReducer(state = initialState, action: Actions) {
@@ -111,11 +113,10 @@ export class SliderComponent {
   // ...
 
   rangeChange() {
-    console.log('done')
+    this.store.dispatch({ type: 'BREAK_MERGE' })
   }
 
   rangeInput(count: number) {
-    console.log('count: ', count)
     this.store.dispatch(new CountChange({ count })
   }
 }
@@ -125,16 +126,14 @@ The method `rangeInput` will be called for any step that the slider is moved by 
 may also dispatch an action to update the state and thus display the result of moving the slider.
 When the user now wants to revert changing the range input, he'd have to retrace every single step that
 he moved the slider. Instead a more expectable redo behaviour would place the slider back where the
-user picked it up before. To facilitate this you can specify the `CountChange` action as an action
+user picked it up before. 
+
+To facilitate this you can specify the `CountChange` action as an action
 whose state changes are merged consecutively by passing its type to the configuration property 
 `mergeActionTypes` (you can even get more fine grained by using predicates through the `mergeRules` property).
-In order to break the merging at some point you can dispatch a special action:
-```ts
-  rangeChange() {
-    this.store.dispatch({ type: 'BREAK_MERGE' })
-  }
-```
-Staying with the example you'd want to do this in the `rangeChange` callback.
+
+In order to break the merging at some point you can dispatch a special action of type `BREAK_MERGE`.
+A good place to do this for the range input would be inside the change input - which is called when the user drops the range knob (this is also covered in the [example](https://stackblitz.com/edit/ngrx-wieder-app)).
 
 ### Clearing the undo/redo stack
 
