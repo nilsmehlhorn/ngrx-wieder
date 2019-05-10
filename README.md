@@ -1,3 +1,5 @@
+![alt](https://img.shields.io/npm/v/ngrx-wieder.svg?style=flat-square)
+
 ngrx-wieder is a lightweight yet configurable solution for implementing undo-redo in Angular apps on top of [NgRx](https://ngrx.io/).
 It's based on [immer](https://github.com/immerjs/immer) hence the name wieder (German for: again)
 
