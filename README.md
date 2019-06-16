@@ -15,7 +15,7 @@ Make sure you're using immer to update your NgRx (sub-)state.
 
 Install via
 ```bash
-npm i -S ngrx-wieder
+npm i ngrx-wieder
 ```
 
 **Peer-dependencies**:
