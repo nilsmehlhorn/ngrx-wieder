@@ -5,6 +5,7 @@
     "prebuild": "cpx README.md projects/ngrx-wieder",
     "build": "ng build",
     "test": "ng test",
+    "test:ci": "ng test --watch false",
     "lint": "ng lint"
   },
   "private": true,
