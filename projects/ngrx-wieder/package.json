@@ -1,10 +1,18 @@
 {
   "name": "ngrx-wieder",
-  "version": "1.0.1",
+  "version": "2.0.0-next.0",
   "author": "Nils Melhorn <mail@nils-mehlhorn.de> (https://nils-mehlhorn.de)",
   "description": "Lightweight undo-redo for NgRx",
   "homepage": "https://github.com/nilsmehlhorn/ngrx-wieder",
-  "keywords": ["undo", "redo", "angular", "ngrx", "immer", "typescript", "javascript"],
+  "keywords": [
+    "undo",
+    "redo",
+    "angular",
+    "ngrx",
+    "immer",
+    "typescript",
+    "javascript"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/nilsmehlhorn/ngrx-wieder.git"
