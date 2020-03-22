@@ -14,6 +14,11 @@
           "options": {
             "tsConfig": "projects/ngrx-wieder/tsconfig.lib.json",
             "project": "projects/ngrx-wieder/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ngrx-wieder/tsconfig.lib.prod.json"
+            }
           }
         },
         "test": {
