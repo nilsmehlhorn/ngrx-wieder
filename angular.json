@@ -44,5 +44,8 @@
       }
     }
   },
-  "defaultProject": "ngrx-wieder"
+  "defaultProject": "ngrx-wieder",
+  "cli": {
+    "analytics": true
+  }
 }

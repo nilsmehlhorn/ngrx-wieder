@@ -18,7 +18,7 @@
     "@angular/platform-browser": "~9.0.7",
     "@angular/platform-browser-dynamic": "~9.0.7",
     "@angular/router": "~9.0.7",
-    "@ngrx/store": "^8.0.1",
+    "@ngrx/store": "^9.0.0",
     "core-js": "^2.5.4",
     "fp-ts": "^1.15.0",
     "immer": "^2.1.4",
