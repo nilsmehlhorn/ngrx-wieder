@@ -1,6 +1,6 @@
-import {ActionReducer, createAction, props, union} from '@ngrx/store'
-import produce, {PatchListener} from 'immer'
-import {undoRedo} from './undo-redo.reducer'
+import {ActionReducer, createAction, on, props, union} from '@ngrx/store'
+import {createUndoRedoReducer} from './undo-redo.reducer'
+import {defaultConfig} from './model'
 
 const id = () => Math.random().toString(36).substr(2, 9)
 
@@ -45,30 +45,32 @@ const incrementMood = createAction('[Test] Increment Mood')
 const all = union({addTodo, removeTodo, viewTodo, incrementMood})
 type Actions = typeof all
 
-const testReducer = (state = initial, action: Actions, listener?: PatchListener): TestState =>
-  produce(state, next => {
-    switch (action.type) {
-      case addTodo.type:
-        next.todos.push({id: id(), text: action.text, checked: false})
-        return
-      case removeTodo.type:
-        next.todos.splice(next.todos.findIndex(t => t.id === action.id), 1)
-        return
-      case viewTodo.type:
-        next.viewed = next.todos.find(t => t.id === action.id)
-        return
-      case incrementMood.type:
-        next.mood = Math.min(state.mood + 10, 100)
-        return
-      default:
-        return
-    }
-  }, listener)
+// const createUndoRedoReducer = undoRedo<TestState, Actions, Draft<TestState>>()
+
+const createTestReducer = (config = defaultConfig) => createUndoRedoReducer(initial, [
+    on(addTodo, (state, action) => {
+      state.todos.push({id: id(), text: action.text, checked: false})
+      return state
+    }),
+    on(removeTodo, (state, action) => {
+      state.todos.splice(state.todos.findIndex(t => t.id === action.id), 1)
+      return state
+    }),
+    on(viewTodo, (state, action) => {
+      state.viewed = state.todos.find(t => t.id === action.id)
+      return state
+    }),
+    on(incrementMood, state => {
+      state.mood = Math.min(state.mood + 10, 100)
+      return state
+    })
+  ], config
+)
 
 describe('UndoRedo Reducer', () => {
 
   it('should undo any action', () => {
-    const redoReducer = undoRedo()(testReducer)
+    const redoReducer = createTestReducer()
     const doneState = redoReducer(initial, addTodo({text: 'Do laundry'}))
     expect(doneState.todos.length).toBe(1)
     expect(doneState.todos[0].text).toEqual('Do laundry')
@@ -78,7 +80,7 @@ describe('UndoRedo Reducer', () => {
   })
 
   it('should redo any action', () => {
-    const redoReducer = undoRedo()(testReducer)
+    const redoReducer = createTestReducer()
     const doneState = redoReducer(initial, addTodo({text: 'Do laundry'}))
     expect(doneState.todos.length).toBe(1)
     expect(doneState.todos[0].text).toEqual('Do laundry')
@@ -95,12 +97,12 @@ describe('UndoRedo Reducer', () => {
     let redoReducer: ActionReducer<TestState>
 
     beforeEach(() => {
-      redoReducer = undoRedo({
+      redoReducer = createTestReducer({
         allowedActionTypes: [
           addTodo.type,
           removeTodo.type
         ]
-      })(testReducer)
+      })
     })
 
     it('should undo allowed actions', () => {
@@ -166,9 +168,9 @@ describe('UndoRedo Reducer', () => {
   })
 
   it('should merge specified action types', () => {
-    const redoReducer = undoRedo({
+    const redoReducer = createTestReducer({
       mergeActionTypes: [incrementMood.type]
-    })(testReducer)
+    })
     const doneState = redoReducer(redoReducer(redoReducer(initial,
       incrementMood()),
       incrementMood()),
@@ -179,9 +181,9 @@ describe('UndoRedo Reducer', () => {
   })
 
   it('should break merging upon break action', () => {
-    const redoReducer = undoRedo({
+    const redoReducer = createTestReducer({
       mergeActionTypes: [incrementMood.type]
-    })(testReducer)
+    })
     const intersectedState = redoReducer(redoReducer(redoReducer(initial,
       incrementMood()),
       incrementMood()),
@@ -200,11 +202,11 @@ describe('UndoRedo Reducer', () => {
 
   it('should merge actions based on merge rules', () => {
     let merge = true
-    const redoReducer = undoRedo({
+    const redoReducer = createTestReducer({
       mergeRules: new Map([
         [incrementMood.type, () => merge]
       ])
-    })(testReducer)
+    })
     const intersectedState = redoReducer(redoReducer(redoReducer(initial,
       incrementMood()),
       incrementMood()),
@@ -224,7 +226,7 @@ describe('UndoRedo Reducer', () => {
   })
 
   it('should clear stack upon clear action', () => {
-    const redoReducer = undoRedo()(testReducer)
+    const redoReducer = createTestReducer()
     const doneState = redoReducer(initial, addTodo({text: 'Do laundry'}))
     expect(doneState.todos.length).toBe(1)
     expect(doneState.todos[0].text).toEqual('Do laundry')
@@ -240,9 +242,9 @@ describe('UndoRedo Reducer', () => {
     let state
 
     beforeEach(() => {
-      redoReducer = undoRedo({
+      redoReducer = createTestReducer({
         track: true
-      })(testReducer) as ActionReducer<TrackingTestState>
+      }) as ActionReducer<TrackingTestState>
       state = {
         ...initial,
         canUndo: false,

@@ -1,9 +1,24 @@
-import {Action, ActionReducer} from '@ngrx/store'
-import {applyPatches} from 'immer'
+import {Action, ActionReducer, On} from '@ngrx/store'
+import produce, {applyPatches, Draft} from 'immer'
 import {fromNullable} from 'fp-ts/lib/Option'
-import {defaultConfig, PatchActionReducer, Patches, WiederConfig} from './model'
+import {defaultConfig, Patches, WiederConfig} from './model'
 
-const undoReducer = <T>(reducer: PatchActionReducer<T>, config: WiederConfig = {}): ActionReducer<T> => {
+export function undoRedo<S, A extends Action = Action, D = Draft<S>>(config: WiederConfig = {}) {
+  return (initialState: D, ...ons: On<D>[]) => createUndoRedoReducer(initialState, ons, {...defaultConfig, ...config}, )
+}
+
+export function createUndoRedoReducer<S, A extends Action = Action, D = Draft<S>>(initialState: D, ons: On<D>[], config: WiederConfig) {
+  const map: { [key: string]: ActionReducer<D, A> } = {}
+  for (let on of ons) {
+    for (let type of on.types) {
+      if (map[type]) {
+        const existingReducer = map[type] as ActionReducer<D, A>
+        map[type] = (state, action) => on.reducer(existingReducer(state, action), action)
+      } else {
+        map[type] = on.reducer
+      }
+    }
+  }
 
   const {
     allowedActionTypes,
@@ -31,7 +46,7 @@ const undoReducer = <T>(reducer: PatchActionReducer<T>, config: WiederConfig = {
         || (fromNullable(mergeRules.get(a.type)).map(r => r(a, b)).getOrElse(false))
       )
   }
-  const applyTracking = (state: T): T => {
+  const applyTracking = (state: D): D => {
     if (track) {
       return {
         ...state,
@@ -42,7 +57,7 @@ const undoReducer = <T>(reducer: PatchActionReducer<T>, config: WiederConfig = {
     return state
   }
 
-  return (state: T, action) => {
+  return function (state: D = initialState, action: A): D {
     switch (action.type) {
       case undoActionType: {
         return fromNullable(undoable.shift()) // take patches from last undone action
@@ -63,45 +78,46 @@ const undoReducer = <T>(reducer: PatchActionReducer<T>, config: WiederConfig = {
         undoable = []
         mergeBroken = false
         lastAction = null
-        return applyTracking(reducer(state, action))
+        return applyTracking(state)
       }
       case breakMergeActionType: {
         mergeBroken = true
         return state
       }
       default: {
-        if (isUndoable(action)) {
-          return applyTracking(reducer(state, action, (patches, inversePatches) => {
-            if (patches.length) {
-              undoable = fromNullable(lastAction)
-                .filter(last => shouldMerge(last, action))
-                .map(() => [
-                  {
-                    // merge patches for consecutive actions of same type
-                    patches: [...undoable[0].patches, ...patches],
-                    inversePatches: [...inversePatches, ...undoable[0].inversePatches]
-                  },
-                  ...undoable.slice(1)
-                ])
-                .getOrElse([
-                  // remember differences while dropping at buffer max-size
-                  {patches, inversePatches},
-                  ...undoable.slice(0, maxBufferSize - 1)
-                ])
-              undone = [] // clear redo stack
-              lastAction = action // clear redo stack
-              mergeBroken = false
-            }
-          }))
-        }
-        return reducer(state, action)
+        return fromNullable(map[action.type])
+          .map(reducer => {
+            const listener = isUndoable(action) ?
+              (patches, inversePatches) => {
+                if (patches.length) {
+                  undoable = fromNullable(lastAction)
+                    .filter(last => shouldMerge(last, action))
+                    .map(() => [
+                      {
+                        // merge patches for consecutive actions of same type
+                        patches: [...undoable[0].patches, ...patches],
+                        inversePatches: [...inversePatches, ...undoable[0].inversePatches]
+                      },
+                      ...undoable.slice(1)
+                    ])
+                    .getOrElse([
+                      // remember differences while dropping at buffer max-size
+                      {patches, inversePatches},
+                      ...undoable.slice(0, maxBufferSize - 1)
+                    ])
+                  undone = [] // clear redo stack
+                  lastAction = action // clear redo stack
+                  mergeBroken = false
+                }
+              }
+              : undefined
+            const produced = produce(state, (draft: D): D | undefined => {
+              // TODO: supply original state when 'produceOn'
+              return reducer ? reducer(draft, action) : undefined
+            }, listener)
+            return applyTracking(produced as D) // TODO
+          }).getOrElse(state)
       }
     }
   }
 }
-
-/**
- * Factory function for constructing an undoRedo meta-reducer.
- * @param config configuration to use for initialization
- */
-export const undoRedo = (config?: WiederConfig) => <T>(reducer: PatchActionReducer<T>) => undoReducer(reducer, config)
