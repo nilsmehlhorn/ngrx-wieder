@@ -3,11 +3,18 @@ import produce, {applyPatches, Draft} from 'immer'
 import {fromNullable} from 'fp-ts/lib/Option'
 import {defaultConfig, Patches, WiederConfig} from './model'
 
-export function undoRedo<S, A extends Action = Action, D = Draft<S>>(config: WiederConfig = {}) {
-  return (initialState: D, ...ons: On<D>[]) => createUndoRedoReducer(initialState, ons, {...defaultConfig, ...config}, )
+type UndoRedo = {
+  createUndoRedoReducer: <S, A extends Action = Action>(initialState: S, ...ons: On<S>[]) => ActionReducer<S, A>
 }
 
-export function createUndoRedoReducer<S, A extends Action = Action, D = Draft<S>>(initialState: D, ons: On<D>[], config: WiederConfig) {
+export function undoRedo(config: WiederConfig = {}): UndoRedo {
+  return {
+    createUndoRedoReducer: (initialState, ...ons) =>
+      create(initialState, ons, {...defaultConfig, ...config})
+  }
+}
+
+export function create<S, A extends Action = Action, D = Draft<S>>(initialState: D, ons: On<D>[], config: WiederConfig) {
   const map: { [key: string]: ActionReducer<D, A> } = {}
   for (let on of ons) {
     for (let type of on.types) {
@@ -30,7 +37,7 @@ export function createUndoRedoReducer<S, A extends Action = Action, D = Draft<S>
     breakMergeActionType,
     clearActionType,
     track
-  } = {...defaultConfig, ...config}
+  } = config
 
   let undoable: Patches[] = []
   let undone: Patches[] = []

@@ -1,5 +1,5 @@
 import {ActionReducer, createAction, on, props, union} from '@ngrx/store'
-import {createUndoRedoReducer} from './undo-redo.reducer'
+import {undoRedo} from './undo-redo.reducer'
 import {defaultConfig} from './model'
 
 const id = () => Math.random().toString(36).substr(2, 9)
@@ -42,12 +42,9 @@ const removeTodo = createAction('[Test] Remove Todo', props<{ id: string }>())
 const viewTodo = createAction('[Test] View Todo', props<{ id: string }>())
 const incrementMood = createAction('[Test] Increment Mood')
 
-const all = union({addTodo, removeTodo, viewTodo, incrementMood})
-type Actions = typeof all
-
-// const createUndoRedoReducer = undoRedo<TestState, Actions, Draft<TestState>>()
-
-const createTestReducer = (config = defaultConfig) => createUndoRedoReducer(initial, [
+const createTestReducer = (config = defaultConfig) => {
+  const {createUndoRedoReducer} = undoRedo(config)
+  return createUndoRedoReducer(initial,
     on(addTodo, (state, action) => {
       state.todos.push({id: id(), text: action.text, checked: false})
       return state
@@ -64,8 +61,8 @@ const createTestReducer = (config = defaultConfig) => createUndoRedoReducer(init
       state.mood = Math.min(state.mood + 10, 100)
       return state
     })
-  ], config
-)
+  )
+}
 
 describe('UndoRedo Reducer', () => {
 
