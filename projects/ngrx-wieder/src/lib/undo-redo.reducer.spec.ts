@@ -1,6 +1,8 @@
-import {ActionReducer, createAction, on, props, union} from '@ngrx/store'
+import {ActionReducer, createAction, on, props} from '@ngrx/store'
 import {undoRedo} from './undo-redo.reducer'
 import {defaultConfig} from './model'
+import {produceOn} from './produce-on'
+import {original} from 'immer'
 
 const id = () => Math.random().toString(36).substr(2, 9)
 
@@ -57,9 +59,8 @@ const createTestReducer = (config = defaultConfig) => {
       state.viewed = state.todos.find(t => t.id === action.id)
       return state
     }),
-    on(incrementMood, state => {
-      state.mood = Math.min(state.mood + 10, 100)
-      return state
+    produceOn(incrementMood, state => {
+      state.mood = Math.min(original(state).mood + 10, 100)
     })
   )
 }

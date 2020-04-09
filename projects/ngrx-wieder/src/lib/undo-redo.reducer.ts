@@ -1,20 +1,21 @@
 import {Action, ActionReducer, On} from '@ngrx/store'
-import produce, {applyPatches, Draft} from 'immer'
+import produce, {applyPatches, Draft, enablePatches, Patch} from 'immer'
 import {fromNullable} from 'fp-ts/lib/Option'
 import {defaultConfig, Patches, WiederConfig} from './model'
 
-type UndoRedo = {
+export interface UndoRedo {
   createUndoRedoReducer: <S, A extends Action = Action>(initialState: S, ...ons: On<S>[]) => ActionReducer<S, A>
 }
 
 export function undoRedo(config: WiederConfig = {}): UndoRedo {
+  enablePatches()
   return {
     createUndoRedoReducer: (initialState, ...ons) =>
       create(initialState, ons, {...defaultConfig, ...config})
   }
 }
 
-export function create<S, A extends Action = Action, D = Draft<S>>(initialState: D, ons: On<D>[], config: WiederConfig) {
+function create<S, A extends Action = Action, D = Draft<S>>(initialState: D, ons: On<D>[], config: WiederConfig) {
   const map: { [key: string]: ActionReducer<D, A> } = {}
   for (let on of ons) {
     for (let type of on.types) {
@@ -63,6 +64,28 @@ export function create<S, A extends Action = Action, D = Draft<S>>(initialState:
     }
     return state
   }
+  const recordPatches = (action: Action, patches: Patch[], inversePatches: Patch[]) => {
+    if (patches.length) {
+      undoable = fromNullable(lastAction)
+        .filter(last => shouldMerge(last, action))
+        .map(() => [
+          {
+            // merge patches for consecutive actions of same type
+            patches: [...undoable[0].patches, ...patches],
+            inversePatches: [...inversePatches, ...undoable[0].inversePatches]
+          },
+          ...undoable.slice(1)
+        ])
+        .getOrElse([
+          // remember differences while dropping at buffer max-size
+          {patches, inversePatches},
+          ...undoable.slice(0, maxBufferSize - 1)
+        ])
+      undone = [] // clear redo stack
+      lastAction = action // clear redo stack
+      mergeBroken = false
+    }
+  }
 
   return function (state: D = initialState, action: A): D {
     switch (action.type) {
@@ -95,34 +118,12 @@ export function create<S, A extends Action = Action, D = Draft<S>>(initialState:
         return fromNullable(map[action.type])
           .map(reducer => {
             const listener = isUndoable(action) ?
-              (patches, inversePatches) => {
-                if (patches.length) {
-                  undoable = fromNullable(lastAction)
-                    .filter(last => shouldMerge(last, action))
-                    .map(() => [
-                      {
-                        // merge patches for consecutive actions of same type
-                        patches: [...undoable[0].patches, ...patches],
-                        inversePatches: [...inversePatches, ...undoable[0].inversePatches]
-                      },
-                      ...undoable.slice(1)
-                    ])
-                    .getOrElse([
-                      // remember differences while dropping at buffer max-size
-                      {patches, inversePatches},
-                      ...undoable.slice(0, maxBufferSize - 1)
-                    ])
-                  undone = [] // clear redo stack
-                  lastAction = action // clear redo stack
-                  mergeBroken = false
-                }
-              }
+              (patches, inversePatches) => recordPatches(action, patches, inversePatches)
               : undefined
-            const produced = produce(state, (draft: D): D | undefined => {
-              // TODO: supply original state when 'produceOn'
-              return reducer ? reducer(draft, action) : undefined
+            const produced = produce(state, (draft: D): void => {
+              reducer(draft, action)
             }, listener)
-            return applyTracking(produced as D) // TODO
+            return applyTracking(produced as D)
           }).getOrElse(state)
       }
     }
