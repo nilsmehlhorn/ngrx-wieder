@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v3.0.0-next.2...v3.0.0) (2020-04-09)
+
 ## [3.0.0-next.2](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v3.0.0-next.1...v3.0.0-next.2) (2020-04-09)
 
 ## [3.0.0-next.1](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v3.0.0-next.0...v3.0.0-next.1) (2020-04-09)
