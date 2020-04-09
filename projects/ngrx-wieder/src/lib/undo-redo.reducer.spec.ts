@@ -2,7 +2,7 @@ import {ActionReducer, createAction, on, props, union} from '@ngrx/store'
 import {undoRedo} from './undo-redo.reducer'
 import {defaultConfig} from './model'
 import {produceOn} from './produce-on'
-import produce, {original, PatchListener} from 'immer'
+import produce, {nothing, original, PatchListener} from 'immer'
 
 const id = () => Math.random().toString(36).substr(2, 9)
 
@@ -43,7 +43,9 @@ const addTodo = createAction('[Test] Create Todo', props<{ text: string }>())
 const removeTodo = createAction('[Test] Remove Todo', props<{ id: string }>())
 const viewTodo = createAction('[Test] View Todo', props<{ id: string }>())
 const incrementMood = createAction('[Test] Increment Mood')
-const all = union({addTodo, removeTodo, viewTodo, incrementMood})
+const reset = createAction('[Test] Reset')
+const remove = createAction('[Test] Remove')
+const all = union({addTodo, removeTodo, viewTodo, incrementMood, reset, remove})
 type Actions = typeof all
 
 const createOnReducer = (config = defaultConfig) => {
@@ -63,6 +65,12 @@ const createOnReducer = (config = defaultConfig) => {
     }),
     produceOn(incrementMood, state => {
       state.mood = Math.min(original(state).mood + 10, 100)
+    }),
+    on(reset, () => {
+      return initial
+    }),
+    produceOn(remove, () => {
+      return nothing as unknown as TestState
     })
   )
 }
@@ -84,6 +92,10 @@ const createSwitchReducer = (config = defaultConfig) => {
         case incrementMood.type:
           next.mood = Math.min(state.mood + 10, 100)
           return
+        case reset.type:
+          return initial
+        case remove.type:
+          return nothing
         default:
           return
       }
@@ -256,6 +268,30 @@ const test = createReducer => {
     expect(doneState.todos[0].checked).toBeFalsy()
     const clearedState = redoReducer(doneState, {type: 'CLEAR'})
     const undoneState = redoReducer(clearedState, {type: 'UNDO'})
+    expect(undoneState).toEqual(doneState)
+  })
+
+  it('should handle state replacement', () => {
+    const redoReducer = createReducer()
+    const doneState = redoReducer(initial, addTodo({text: 'Do laundry'}))
+    expect(doneState.todos.length).toBe(1)
+    expect(doneState.todos[0].text).toEqual('Do laundry')
+    expect(doneState.todos[0].checked).toBeFalsy()
+    const replacedState = redoReducer(doneState, reset)
+    expect(replacedState).toEqual(initial)
+    const undoneState = redoReducer(replacedState, {type: 'UNDO'})
+    expect(undoneState).toEqual(doneState)
+  })
+
+  it('should handle state removal', () => {
+    const redoReducer = createReducer()
+    const doneState = redoReducer(initial, addTodo({text: 'Do laundry'}))
+    expect(doneState.todos.length).toBe(1)
+    expect(doneState.todos[0].text).toEqual('Do laundry')
+    expect(doneState.todos[0].checked).toBeFalsy()
+    const replacedState = redoReducer(doneState, remove)
+    expect(replacedState).toBeUndefined()
+    const undoneState = redoReducer(replacedState, {type: 'UNDO'})
     expect(undoneState).toEqual(doneState)
   })
 
