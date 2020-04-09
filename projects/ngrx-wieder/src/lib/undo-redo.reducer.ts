@@ -11,7 +11,7 @@ export interface UndoRedo {
 export function undoRedo(config: WiederConfig = {}): UndoRedo {
   enablePatches()
   return {
-    createUndoRedoReducer: (initialState, ...ons) =>
+    createUndoRedoReducer: <S>(initialState: S, ...ons: On<S>[]) =>
       create(initialState, ons, config),
     wrapReducer: reducer => wrap(reducer, config)
   }
