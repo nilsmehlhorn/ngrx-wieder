@@ -5,78 +5,60 @@
 [![codecov-badge](https://codecov.io/gh/nilsmehlhorn/ngrx-wieder/branch/master/graph/badge.svg)](https://codecov.io/gh/nilsmehlhorn/ngrx-wieder)
 
 ngrx-wieder is a lightweight yet configurable solution for implementing undo-redo in Angular apps on top of [NgRx](https://ngrx.io/).
-It's based on [immer](https://github.com/immerjs/immer) hence the name wieder (German for: again)
+It's based on [immer](https://immerjs.github.io/immer/docs/introduction) hence the name wieder (German for: again)
 
 ⚡ [Example StackBlitz](https://stackblitz.com/github/nilsmehlhorn/ngrx-wieder-example)
 
 ## Prerequisites
 
-Make sure you're using immer to update your NgRx (sub-)state.
+Make sure you're using [immer](https://github.com/immerjs/immer) to update your NgRx (sub-)state. That means you're using mutating APIs to update the state while immer provides a new state behind the scenes. If you're just starting out, install immer with this command:
+
+```bash
+npm i immer
+```
 
 ## Installation
 
-Install via
+Install this library with the following command:
+
 ```bash
 npm i ngrx-wieder
 ```
 
-**Peer-dependencies**:
-- @angular/common
-- @angular/core
-- @ngrx/store
-- immer
-
 ## Usage
 
-ngrx-wieder works by recording patches from immer and applying
-them based on dispatch of actions for perfoming undo and redo.
-Therefore the reducer on which you want to apply the undo-redo feature
-has to update the NgRx state through immer. In order to let
-ngrx-wieder record the changes your reducer has to be adapted
-so that it can forward the patches from immer:
-
-**Before**
-```ts
-import {produce} from 'immer'
-
-const reducer = (state: State, action: Actions): State =>
-  produce(state, nextState => {
-    switch (action.type) {
-    /* action handling */
-    }
-  })
-```
-
-**After**
-```ts
-import {produce, PatchListener} from 'immer'
-
-const reducer = (state: State, action: Actions, patchListener?: PatchListener): State =>
-  produce(state, nextState => {
-    switch (action.type) {
-    /* action handling */
-    }
-  }, patchListener)
-```
-
-Next you'll configure the undo-redo behaviour by instantiating `undoRedo` and wrapping
-your custom reducer inside the `undoable` meta-reducer.
+Firstly, you'll initialize ngrx-wieder and optionally pass a custom config. It'll return an object with the function `createUndoRedoReducer` which you can use just like [createReducer](https://ngrx.io/guide/store/reducers#creating-the-reducer-function) from NgRx, however, `state` inside `on` will be a immer draft of the last state. If you'd rather not return the `state` in each on-reducer, you can use `produceOn` instead.
 
 ```ts
-import {undoRedo} from 'ngrx-wieder'
+import {undoRedo, produceOn} from 'ngrx-wieder'
 
-// wrap reducer inside meta-reducer to make it undoable
-const undoableReducer = undoRedo({
+// initialize ngrx-wieder with custom config
+const {createUndoRedoReducer} = undoRedo({
   allowedActionTypes: [
-    ActionTypes.Add,
-    ActionTypes.Remove,
-    ActionTypes.Select
+    Actions.addTodo,
+    Actions.removeTodo,
+    Actions.toggleTodo
   ]
-})(reducer)
+})
+
+const reducer = createUndoRedoReducer(initialState,
+    on(addTodo, (state, {text}) => {
+      state.todos.push({id: nextId(), text, checked: false})
+      return state
+    }),
+    on(toggleTodo, (state, {id}) => {
+      const todo = state.todos.find(t => t.id === id)
+      todo.checked = !todo.checked
+      return state
+    }),
+    produceOn(removeTodo, (state, {id}) => {
+      state.todos.splice(state.todos.findIndex(t => t.id === id), 1)
+    }),
+)
 
 // wrap into exported function to keep Angular AOT working
-export function myReducer(state = initialState, action: Actions) {
-  return undoableReducer(state, action)
+export function appReducer(state, action: Actions) {
+  return reducer(state, action)
 }
 ```
 
@@ -146,4 +128,56 @@ A good place to do this for the range input would be inside the change input - w
 You can clear the stack for undoable and redoable actions by dispatching a special clearing action:
 ```ts
 this.store.dispatch({ type: 'CLEAR' })
+```
+
+### Switch-based Reducers
+
+ngrx-wieder works by recording patches from immer and applying them based on dispatch of actions for perfoming undo and redo. While `createUndoRedoReducer` handles interaction with immer, this is not possible when you're using a reducer that is based on a switch-statement. In that case the reducer on which you want to apply the undo-redo feature has to update the NgRx state directly through immer. In order to let ngrx-wieder record the changes your reducer has to be adapted so that it can forward the patches from immer:
+
+**Before**
+```ts
+import {produce} from 'immer'
+
+const reducer = (state: State, action: Actions): State =>
+  produce(state, nextState => {
+    switch (action.type) {
+    /* action handling */
+    }
+  })
+```
+
+**After**
+```ts
+import {produce, PatchListener} from 'immer'
+
+const reducer = (state: State, action: Actions, patchListener?: PatchListener): State =>
+  produce(state, nextState => {
+    switch (action.type) {
+    /* action handling */
+    }
+  }, patchListener)
+```
+
+Next you'll configure the undo-redo behaviour by instantiating `undoRedo` and wrapping
+your custom reducer with the `wrapReducer` function:
+
+```ts
+import {undoRedo} from 'ngrx-wieder'
+
+// initialize ngrx-wieder
+const {wrapReducer} = undoRedo({
+  allowedActionTypes: [
+    Actions.addTodo,
+    Actions.removeTodo,
+    Actions.toggleTodo
+  ]
+})
+
+// wrap reducer inside meta-reducer to make it undoable
+const undoableReducer = wrapReducer(reducer)
+
+// wrap into exported function to keep Angular AOT working
+export function myReducer(state = initialState, action: Actions) {
+  return undoableReducer(state, action)
+}
 ```
