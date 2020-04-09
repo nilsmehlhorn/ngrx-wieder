@@ -1,33 +1,45 @@
 import {Action, ActionReducer, On} from '@ngrx/store'
-import produce, {applyPatches, Draft, enablePatches, Patch} from 'immer'
+import produce, {applyPatches, enablePatches, Patch, PatchListener} from 'immer'
 import {fromNullable} from 'fp-ts/lib/Option'
-import {defaultConfig, Patches, WiederConfig} from './model'
+import {defaultConfig, PatchActionReducer, Patches, WiederConfig} from './model'
 
 export interface UndoRedo {
   createUndoRedoReducer: <S, A extends Action = Action>(initialState: S, ...ons: On<S>[]) => ActionReducer<S, A>
+  wrapReducer: <S, A extends Action = Action>(reducer: PatchActionReducer<S, A>) => ActionReducer<S, A>
 }
 
 export function undoRedo(config: WiederConfig = {}): UndoRedo {
   enablePatches()
   return {
     createUndoRedoReducer: (initialState, ...ons) =>
-      create(initialState, ons, {...defaultConfig, ...config})
+      create(initialState, ons, config),
+    wrapReducer: reducer => wrap(reducer, config)
   }
 }
 
-function create<S, A extends Action = Action, D = Draft<S>>(initialState: D, ons: On<D>[], config: WiederConfig) {
-  const map: { [key: string]: ActionReducer<D, A> } = {}
+function create<S, A extends Action = Action>(initialState: S, ons: On<S>[], config: WiederConfig) {
+  const map: { [key: string]: ActionReducer<S, A> } = {}
   for (const on of ons) {
     for (const type of on.types) {
       if (map[type]) {
-        const existingReducer = map[type] as ActionReducer<D, A>
+        const existingReducer = map[type]
         map[type] = (state, action) => on.reducer(existingReducer(state, action), action)
       } else {
         map[type] = on.reducer
       }
     }
   }
+  const reducer = ((state: S = initialState, action: A, listener: PatchListener) => {
+    const r = map[action.type]
+    if (r) {
+      return produce(state, (draft: S) => r(draft, action), listener)
+    }
+    return state
+  }) as PatchActionReducer<S, A>
+  return wrap(reducer, config)
+}
 
+function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, config: WiederConfig) {
   const {
     allowedActionTypes,
     mergeActionTypes,
@@ -38,7 +50,7 @@ function create<S, A extends Action = Action, D = Draft<S>>(initialState: D, ons
     breakMergeActionType,
     clearActionType,
     track
-  } = config
+  } = {...defaultConfig, ...config}
 
   let undoable: Patches[] = []
   let undone: Patches[] = []
@@ -54,7 +66,7 @@ function create<S, A extends Action = Action, D = Draft<S>>(initialState: D, ons
         || (fromNullable(mergeRules.get(a.type)).map(r => r(a, b)).getOrElse(false))
       )
   }
-  const applyTracking = (state: D): D => {
+  const applyTracking = (state: S): S => {
     if (track) {
       return {
         ...state,
@@ -87,7 +99,7 @@ function create<S, A extends Action = Action, D = Draft<S>>(initialState: D, ons
     }
   }
 
-  return (state: D = initialState, action: A): D => {
+  return (state: S, action: A): S => {
     switch (action.type) {
       case undoActionType: {
         return fromNullable(undoable.shift()) // take patches from last undone action
@@ -115,16 +127,10 @@ function create<S, A extends Action = Action, D = Draft<S>>(initialState: D, ons
         return state
       }
       default: {
-        return fromNullable(map[action.type])
-          .map(reducer => {
-            const listener = isUndoable(action) ?
-              (patches, inversePatches) => recordPatches(action, patches, inversePatches)
-              : undefined
-            const produced = produce(state, (draft: D): void => {
-              reducer(draft, action)
-            }, listener)
-            return applyTracking(produced as D)
-          }).getOrElse(state)
+        const listener = isUndoable(action) ?
+          (patches, inversePatches) => recordPatches(action, patches, inversePatches)
+          : undefined
+        return applyTracking(reducer(state, action, listener))
       }
     }
   }

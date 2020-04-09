@@ -4,8 +4,8 @@ import {Patch, PatchListener} from 'immer'
 /**
  * Reducer extension for capturing patches from immer.
  */
-export interface PatchActionReducer<T, V extends Action = Action> extends ActionReducer<T, V> {
-  (state: T | undefined, action: V, patchListener: PatchListener): T
+export interface PatchActionReducer<S, A extends Action = Action> extends ActionReducer<S, A> {
+  (state: S | undefined, action: A, patchListener: PatchListener): S | undefined
 }
 
 /**
