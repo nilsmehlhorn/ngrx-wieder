@@ -28,6 +28,6 @@
     "@angular/common": "~8.0.1",
     "@angular/core": "~8.0.1",
     "@ngrx/store": "~8.0.1",
-    "immer": "^2.0.0"
+    "immer": "^6.0.3"
   }
 }
