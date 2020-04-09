@@ -1,6 +1,5 @@
 import {Action, ActionReducer, On} from '@ngrx/store'
 import produce, {applyPatches, enablePatches, Patch, PatchListener} from 'immer'
-import {fromNullable} from 'fp-ts/lib/Option'
 import {defaultConfig, PatchActionReducer, Patches, WiederConfig} from './model'
 
 export interface UndoRedo {
@@ -63,7 +62,7 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
     return !mergeBroken && a.type === b.type
       && (
         mergeActionTypes.includes(a.type)
-        || (fromNullable(mergeRules.get(a.type)).map(r => r(a, b)).getOrElse(false))
+        || (mergeRules.get(a.type) ? mergeRules.get(a.type)(a, b) : false)
       )
   }
   const applyTracking = (state: S): S => {
@@ -78,21 +77,22 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
   }
   const recordPatches = (action: Action, patches: Patch[], inversePatches: Patch[]) => {
     if (patches.length) {
-      undoable = fromNullable(lastAction)
-        .filter(last => shouldMerge(last, action))
-        .map(() => [
+      if (lastAction && shouldMerge(lastAction, action)) {
+        undoable = [
           {
             // merge patches for consecutive actions of same type
             patches: [...undoable[0].patches, ...patches],
             inversePatches: [...inversePatches, ...undoable[0].inversePatches]
           },
           ...undoable.slice(1)
-        ])
-        .getOrElse([
+        ]
+      } else {
+        undoable = [
           // remember differences while dropping at buffer max-size
           {patches, inversePatches},
           ...undoable.slice(0, maxBufferSize - 1)
-        ])
+        ]
+      }
       undone = [] // clear redo stack
       lastAction = action // clear redo stack
       mergeBroken = false
@@ -102,18 +102,20 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
   return (state: S, action: A): S => {
     switch (action.type) {
       case undoActionType: {
-        return fromNullable(undoable.shift()) // take patches from last undone action
-          .map(patches => {
-            undone = [patches].concat(undone) // put patches on redo stack (Array.shift somehow breaks with AOT)
-            return applyTracking(applyPatches(state, patches.inversePatches)) // reverse patches
-          }).getOrElse(state)
+        const undoPatches = undoable.shift() // take patches from last (re)done action
+        if (undoPatches) {
+          undone = [undoPatches].concat(undone) // put patches on redo stack (Array.shift somehow breaks with AOT)
+          return applyTracking(applyPatches(state, undoPatches.inversePatches)) // reverse
+        }
+        return state
       }
       case redoActionType: {
-        return fromNullable(undone.shift()) // take patches from last undone action
-          .map(patches => {
-            undoable = [patches].concat(undoable) // put patches on undo stack (Array.shift somehow breaks with AOT)
-            return applyTracking(applyPatches(state, patches.patches)) // reverse patches
-          }).getOrElse(state)
+        const redoPatches = undone.shift() // take patches from last undone action
+        if (redoPatches) {
+          undoable = [redoPatches].concat(undoable) // put patches on undo stack (Array.shift somehow breaks with AOT)
+          return applyTracking(applyPatches(state, redoPatches.patches)) // replay
+        }
+        return state
       }
       case clearActionType: {
         undone = []
