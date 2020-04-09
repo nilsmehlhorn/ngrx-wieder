@@ -2,19 +2,18 @@ import {ActionCreator, ActionReducer, ActionType} from '@ngrx/store/src/models'
 import {On} from '@ngrx/store'
 import {Draft} from 'immer'
 
-export interface ProduceOnReducer<S, C extends ActionCreator[], D = Draft<S>> {
-  (state: D, action: ActionType<C[number]>): void | D
-}
+export type ProduceOnReducer<S, C extends ActionCreator[], D = Draft<S>> =
+  (state: D, action: ActionType<C[number]>) => void | D
 
 export function produceOn<C1 extends ActionCreator, S>(
   creator1: C1,
   reducer: ProduceOnReducer<S, [C1]>
-): On<S>;
+): On<S>
 export function produceOn<C1 extends ActionCreator, C2 extends ActionCreator, S>(
   creator1: C1,
   creator2: C2,
   reducer: ProduceOnReducer<S, [C1, C2]>
-): On<S>;
+): On<S>
 export function produceOn<C1 extends ActionCreator,
   C2 extends ActionCreator,
   C3 extends ActionCreator,
@@ -23,7 +22,7 @@ export function produceOn<C1 extends ActionCreator,
   creator2: C2,
   creator3: C3,
   reducer: ProduceOnReducer<S, [C1, C2, C3]>
-): On<S>;
+): On<S>
 export function produceOn<C1 extends ActionCreator,
   C2 extends ActionCreator,
   C3 extends ActionCreator,
@@ -34,7 +33,7 @@ export function produceOn<C1 extends ActionCreator,
   creator3: C3,
   creator4: C4,
   reducer: ProduceOnReducer<S, [C1, C2, C3, C4]>
-): On<S>;
+): On<S>
 export function produceOn<C1 extends ActionCreator,
   C2 extends ActionCreator,
   C3 extends ActionCreator,
@@ -47,7 +46,7 @@ export function produceOn<C1 extends ActionCreator,
   creator4: C4,
   creator5: C5,
   reducer: ProduceOnReducer<S, [C1, C2, C3, C4, C5]>
-): On<S>;
+): On<S>
 export function produceOn<C1 extends ActionCreator,
   C2 extends ActionCreator,
   C3 extends ActionCreator,
@@ -62,7 +61,7 @@ export function produceOn<C1 extends ActionCreator,
   creator5: C5,
   creator6: C6,
   reducer: ProduceOnReducer<S, [C1, C2, C3, C4, C5, C6]>
-): On<S>;
+): On<S>
 export function produceOn<C1 extends ActionCreator,
   C2 extends ActionCreator,
   C3 extends ActionCreator,
@@ -79,7 +78,7 @@ export function produceOn<C1 extends ActionCreator,
   creator6: C6,
   creator7: C7,
   reducer: ProduceOnReducer<S, [C1, C2, C3, C4, C5, C6, C7]>
-): On<S>;
+): On<S>
 export function produceOn<C1 extends ActionCreator,
   C2 extends ActionCreator,
   C3 extends ActionCreator,
@@ -98,7 +97,7 @@ export function produceOn<C1 extends ActionCreator,
   creator7: C7,
   creator8: C8,
   reducer: ProduceOnReducer<S, [C1, C2, C3, C4, C5, C6, C7, C8]>
-): On<S>;
+): On<S>
 export function produceOn<C1 extends ActionCreator,
   C2 extends ActionCreator,
   C3 extends ActionCreator,
@@ -119,7 +118,7 @@ export function produceOn<C1 extends ActionCreator,
   creator8: C8,
   creator9: C9,
   reducer: ProduceOnReducer<S, [C1, C2, C3, C4, C5, C6, C7, C8, C9]>
-): On<S>;
+): On<S>
 export function produceOn<C1 extends ActionCreator,
   C2 extends ActionCreator,
   C3 extends ActionCreator,
@@ -142,12 +141,12 @@ export function produceOn<C1 extends ActionCreator,
   creator9: C9,
   creator10: C10,
   reducer: ProduceOnReducer<S, [C1, C2, C3, C4, C5, C6, C7, C8, C9, C10]>
-): On<S>;
+): On<S>
 export function produceOn<S>(
   creator: ActionCreator,
   ...rest: (ActionCreator | ProduceOnReducer<S, [ActionCreator]>)[]
-): On<S>;
-export function produceOn<S>(...args: (ActionCreator | Function)[]): On<S> {
+): On<S>
+export function produceOn<S>(...args: (ActionCreator | ProduceOnReducer<S, ActionCreator[]>)[]): On<S> {
   const reducer = args.pop() as ActionReducer<S>
   const types = args.map((creator: ActionCreator) => creator.type)
   return {reducer, types}

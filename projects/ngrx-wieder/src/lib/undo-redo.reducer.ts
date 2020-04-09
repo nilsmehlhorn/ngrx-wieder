@@ -17,8 +17,8 @@ export function undoRedo(config: WiederConfig = {}): UndoRedo {
 
 function create<S, A extends Action = Action, D = Draft<S>>(initialState: D, ons: On<D>[], config: WiederConfig) {
   const map: { [key: string]: ActionReducer<D, A> } = {}
-  for (let on of ons) {
-    for (let type of on.types) {
+  for (const on of ons) {
+    for (const type of on.types) {
       if (map[type]) {
         const existingReducer = map[type] as ActionReducer<D, A>
         map[type] = (state, action) => on.reducer(existingReducer(state, action), action)
@@ -87,7 +87,7 @@ function create<S, A extends Action = Action, D = Draft<S>>(initialState: D, ons
     }
   }
 
-  return function (state: D = initialState, action: A): D {
+  return (state: D = initialState, action: A): D => {
     switch (action.type) {
       case undoActionType: {
         return fromNullable(undoable.shift()) // take patches from last undone action
