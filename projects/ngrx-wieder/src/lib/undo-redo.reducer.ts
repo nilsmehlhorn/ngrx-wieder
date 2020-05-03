@@ -1,10 +1,12 @@
 import {Action, ActionReducer, On} from '@ngrx/store'
 import produce, {applyPatches, enablePatches, Patch, PatchListener} from 'immer'
-import {defaultConfig, PatchActionReducer, Patches, WiederConfig} from './model'
+import {defaultConfig, PatchActionReducer, Patches, Segmenter, WiederConfig} from './model'
 
 export interface UndoRedo {
   createUndoRedoReducer: <S, A extends Action = Action>(initialState: S, ...ons: On<S>[]) => ActionReducer<S, A>
-  wrapReducer: <S, A extends Action = Action>(reducer: PatchActionReducer<S, A>) => ActionReducer<S, A>
+  createSegmentedUndoRedoReducer: <S, A extends Action =
+    Action>(initialState: S, segmenter: Segmenter<S>, ...ons: On<S>[]) => ActionReducer<S, A>
+  wrapReducer: <S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, segmenter?: Segmenter<S>) => ActionReducer<S, A>
 }
 
 export function undoRedo(config: WiederConfig = {}): UndoRedo {
@@ -12,11 +14,13 @@ export function undoRedo(config: WiederConfig = {}): UndoRedo {
   return {
     createUndoRedoReducer: <S>(initialState: S, ...ons: On<S>[]) =>
       create(initialState, ons, config),
-    wrapReducer: reducer => wrap(reducer, config)
+    createSegmentedUndoRedoReducer: <S>(initialState: S, segmenter: Segmenter<S>, ...ons: On<S>[]) =>
+      create(initialState, ons, config, segmenter),
+    wrapReducer: (reducer, segmenter) => wrap(reducer, config, segmenter)
   }
 }
 
-function create<S, A extends Action = Action>(initialState: S, ons: On<S>[], config: WiederConfig) {
+function create<S, A extends Action = Action>(initialState: S, ons: On<S>[], config: WiederConfig, segmenter?: Segmenter<S>) {
   const map: { [key: string]: ActionReducer<S, A> } = {}
   for (const on of ons) {
     for (const type of on.types) {
@@ -35,10 +39,51 @@ function create<S, A extends Action = Action>(initialState: S, ons: On<S>[], con
     }
     return state
   }) as PatchActionReducer<S, A>
-  return wrap(reducer, config)
+  return wrap(reducer, config, segmenter)
 }
 
-function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, config: WiederConfig) {
+type Key = string | number
+
+type PatchMap = {
+  [id in string | number]: Patches[]
+}
+
+type PatchAccessor = [() => Patches[], (patches: Patches[]) => void]
+
+interface PatchAccessors {
+  undoable: PatchAccessor
+  undone: PatchAccessor
+}
+
+const patchAccessor = (map: PatchMap, key: Key): PatchAccessor => {
+  return [
+    () => {
+      let patches = map[key]
+      if (!patches) {
+        patches = map[key] = []
+      }
+      return patches
+    },
+    (p: Patches[]) => map[key] = p
+  ]
+}
+
+const tracker = <S>(track: boolean) => {
+  if (!track) {
+    return (state: S) => state
+  }
+  return (state: S, accessors: PatchAccessors): S => {
+    const {undoable: [getUndoable], undone: [getUndone]} = accessors
+    return {
+      ...state,
+      canUndo: getUndoable().length > 0,
+      canRedo: getUndone().length > 0
+    }
+  }
+}
+
+function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, config: WiederConfig,
+                                            segmenter: Segmenter<S> = () => 'DEFAULT') {
   const {
     allowedActionTypes,
     mergeActionTypes,
@@ -51,13 +96,15 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
     track
   } = {...defaultConfig, ...config}
 
-  let undoable: Patches[] = []
-  let undone: Patches[] = []
+  const undoableMap: PatchMap = {}
+  const undoneMap: PatchMap = {}
+
   let lastAction: Action
   let mergeBroken = false
 
   const isUndoable = (action: Action) => !allowedActionTypes.length ||
     allowedActionTypes.some(type => type === action.type)
+
   const shouldMerge = (a: Action, b: Action): boolean => {
     return !mergeBroken && a.type === b.type
       && (
@@ -65,74 +112,89 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
         || (mergeRules.get(a.type) ? mergeRules.get(a.type)(a, b) : false)
       )
   }
-  const applyTracking = (state: S): S => {
-    if (track) {
-      return {
-        ...state,
-        canUndo: undoable.length > 0,
-        canRedo: undone.length > 0
-      }
-    }
-    return state
-  }
-  const recordPatches = (action: Action, patches: Patch[], inversePatches: Patch[]) => {
+
+  const applyTracking = tracker<S>(track)
+
+  const recordPatches = (accessors: PatchAccessors, action: Action, patches: Patch[], inversePatches: Patch[]) => {
+    const {
+      undoable: [getUndoable, setUndoable],
+      undone: [getUndone, setUndone]
+    } = accessors
     if (patches.length) {
       if (lastAction && shouldMerge(lastAction, action)) {
-        undoable = [
+        setUndoable([
           {
             // merge patches for consecutive actions of same type
-            patches: [...undoable[0].patches, ...patches],
-            inversePatches: [...inversePatches, ...undoable[0].inversePatches]
+            patches: [...getUndoable()[0].patches, ...patches],
+            inversePatches: [...inversePatches, ...getUndoable()[0].inversePatches]
           },
-          ...undoable.slice(1)
-        ]
+          ...getUndoable().slice(1)
+        ])
       } else {
-        undoable = [
+        setUndoable([
           // remember differences while dropping at buffer max-size
           {patches, inversePatches},
-          ...undoable.slice(0, maxBufferSize - 1)
-        ]
+          ...getUndoable().slice(0, maxBufferSize - 1)
+        ])
       }
-      undone = [] // clear redo stack
-      lastAction = action // clear redo stack
+      setUndone([]) // clear redo stack
+      lastAction = action
       mergeBroken = false
     }
   }
 
+  const patchAccessors = (state: S): PatchAccessors => {
+    const key = segmenter(state)
+    const undoableAccessor = patchAccessor(undoableMap, key)
+    const undoneAccessor = patchAccessor(undoneMap, key)
+    return {undoable: undoableAccessor, undone: undoneAccessor}
+  }
+
   return (state: S, action: A): S => {
+    const accessors = patchAccessors(state)
+    const {
+      undoable: [getUndoable, setUndoable],
+      undone: [getUndone, setUndone]
+    } = accessors
     switch (action.type) {
       case undoActionType: {
-        const undoPatches = undoable.shift() // take patches from last (re)done action
+        const undoPatches = getUndoable().shift() // take patches from last (re)done action
         if (undoPatches) {
-          undone = [undoPatches].concat(undone) // put patches on redo stack (Array.shift somehow breaks with AOT)
-          return applyTracking(applyPatches(state, undoPatches.inversePatches)) // reverse
+          // put patches on redo stack (Array.shift somehow breaks with AOT)
+          setUndone([undoPatches].concat(getUndone()))
+          return applyTracking(applyPatches(state, undoPatches.inversePatches), accessors) // reverse
         }
         return state
       }
       case redoActionType: {
-        const redoPatches = undone.shift() // take patches from last undone action
+        const redoPatches = getUndone().shift() // take patches from last undone action
         if (redoPatches) {
-          undoable = [redoPatches].concat(undoable) // put patches on undo stack (Array.shift somehow breaks with AOT)
-          return applyTracking(applyPatches(state, redoPatches.patches)) // replay
+          // put patches on undo stack (Array.shift somehow breaks with AOT)
+          setUndoable([redoPatches].concat(getUndoable()))
+          return applyTracking(applyPatches(state, redoPatches.patches), accessors) // replay
         }
         return state
       }
       case clearActionType: {
-        undone = []
-        undoable = []
+        setUndone([])
+        setUndoable([])
         mergeBroken = false
         lastAction = null
-        return applyTracking(state)
+        return applyTracking(state, accessors)
       }
       case breakMergeActionType: {
         mergeBroken = true
         return state
       }
       default: {
-        const listener = isUndoable(action) ?
-          (patches, inversePatches) => recordPatches(action, patches, inversePatches)
+        const undoable = isUndoable(action)
+        const listener = undoable ?
+          (patches, inversePatches) => recordPatches(accessors, action, patches, inversePatches)
           : undefined
-        return applyTracking(reducer(state, action, listener))
+        const nextState = reducer(state, action, listener)
+        // active patch-stack might have changed, segmentation change must not undoable
+        const nextAccessors = undoable ? accessors : patchAccessors(nextState)
+        return applyTracking(nextState, nextAccessors)
       }
     }
   }
