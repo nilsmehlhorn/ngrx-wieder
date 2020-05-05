@@ -3,8 +3,7 @@ import {undoRedo} from './undo-redo.reducer'
 import {defaultConfig} from './model'
 import {produceOn} from './produce-on'
 import produce, {nothing, original, PatchListener} from 'immer'
-
-const id = () => Math.random().toString(36).substr(2, 9)
+import {id} from './util/id'
 
 interface Todo {
   id: string,

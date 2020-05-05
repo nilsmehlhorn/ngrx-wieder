@@ -23,6 +23,11 @@ export interface Patches {
 export type MergeRule = (a: Action, b: Action) => boolean
 
 /**
+ * Segmenter for resolving identifier of unique undo-redo stacks.
+ */
+export type Segmenter<S> = (state: S) => string | number
+
+/**
  * Configuration for undoRedo reducer.
  */
 export interface WiederConfig {

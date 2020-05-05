@@ -29,6 +29,8 @@ npm i ngrx-wieder
 
 Firstly, you'll initialize ngrx-wieder and optionally pass a custom config. It'll return an object with the function `createUndoRedoReducer` which you can use just like [createReducer](https://ngrx.io/guide/store/reducers#creating-the-reducer-function) from NgRx, however, `state` inside `on` will be a immer draft of the last state. If you'd rather not return the `state` in each on-reducer, you can use `produceOn` instead.
 
+**Tip**: Inside `on` or `produceOn` you can access the original state of an immer.js draft, therefore the last state, with the [original function](https://immerjs.github.io/immer/docs/original).
+
 ```ts
 import {undoRedo, produceOn} from 'ngrx-wieder'
 
@@ -42,22 +44,22 @@ const {createUndoRedoReducer} = undoRedo({
 })
 
 const reducer = createUndoRedoReducer(initialState,
-    on(addTodo, (state, {text}) => {
+    on(Actions.addTodo, (state, {text}) => {
       state.todos.push({id: nextId(), text, checked: false})
       return state
     }),
-    on(toggleTodo, (state, {id}) => {
+    on(Actions.toggleTodo, (state, {id}) => {
       const todo = state.todos.find(t => t.id === id)
       todo.checked = !todo.checked
       return state
     }),
-    produceOn(removeTodo, (state, {id}) => {
+    produceOn(Actions.removeTodo, (state, {id}) => {
       state.todos.splice(state.todos.findIndex(t => t.id === id), 1)
     }),
 )
 
 // wrap into exported function to keep Angular AOT working
-export function appReducer(state, action: Actions) {
+export function appReducer(state, action) {
   return reducer(state, action)
 }
 ```
@@ -177,7 +179,62 @@ const {wrapReducer} = undoRedo({
 const undoableReducer = wrapReducer(reducer)
 
 // wrap into exported function to keep Angular AOT working
-export function myReducer(state = initialState, action: Actions) {
+export function myReducer(state = initialState, action) {
   return undoableReducer(state, action)
 }
+```
+
+### Segmentation
+
+Segmentation provides distinct undo-redo stacks for multiple instances of the same kind of state. For example, this allows you to implement an application that can have multiple documents open at the same time in multiple tabs as illustrated by this state:
+
+```typescript
+interface State {
+  activeDocument: string
+  documents: { [id: string]: Document }
+  canUndo: boolean
+  canRedo: boolean
+}
+```
+
+Now, when the user is viewing one document, he probably doesn't want to undo changes in a different one. In order to make this work, you need to inform ngrx-wieder about your segmentation by using `createSegmentedUndoRedoReducer` providing a segmenter. Note that any actions that change the result of the segmenter must not be undoable (here it's `documentSwitch`). Moreover, when tracking is active, `canUndo` and `canRedo` will reflect the active undo-redo stack.
+
+```typescript
+// helper function for manipulating active document in reducer
+const activeDocument = (state: TestState): Document => state.documents[state.activeDocument]
+
+const {createSegmentedUndoRedoReducer} = undoRedo({
+    allowedActionTypes: [
+     nameChange.type
+    ],
+    track: true
+})
+
+const reducer = createSegmentedUndoRedoReducer(initialState,
+    state => state.activeDocument, // segmenter identifying undo-redo stack
+    produceOn(nameChange, (state, action) => {
+      activeDocument(state).name = action.name
+    }),
+    produceOn(documentSwitch, (state, action) => {
+      state.activeDocument = action.document
+    })
+)
+```
+
+When you're using a switch-based reducer, simply pass the segmenter as a second argument to `wrapReducer`:
+
+```typescript
+const {wrapReducer} = undoRedo({...})
+const reducer = (state = initialState, action: Actions, listener?: PatchListener): State =>
+    produce(state, next => {
+        switch (action.type) {
+          case nameChange.type:
+            activeDocument(next).name = action.name
+            return
+          case documentSwitch.type:
+            next.activeDocument = action.document
+            return
+        }
+    }, listener)
+return wrapReducer(reducer, state => state.activeDocument)
 ```
