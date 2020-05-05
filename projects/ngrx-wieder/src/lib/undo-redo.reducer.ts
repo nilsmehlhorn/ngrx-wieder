@@ -151,6 +151,10 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
   }
 
   return (state: S, action: A): S => {
+    if (!state) {
+      // let reducer initialize state
+      return reducer(state, action)
+    }
     const accessors = patchAccessors(state)
     const {
       undoable: [getUndoable, setUndoable],
