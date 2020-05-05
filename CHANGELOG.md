@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [3.0.1-next.1](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v3.0.1-next.0...v3.0.1-next.1) (2020-05-05)
+
+
+### Bug Fixes
+
+* **segmentation:** fix initial state handling ([52faeb5](https://github.com/nilsmehlhorn/ngrx-wieder/commit/52faeb5de3ee43352ea916ca52c423ddb6fb428e))
+
 ### [3.0.1-next.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v3.0.0...v3.0.1-next.0) (2020-05-05)
 
 ## [3.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v3.0.0-next.2...v3.0.0) (2020-04-09)
