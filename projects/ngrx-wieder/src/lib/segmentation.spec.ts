@@ -133,6 +133,12 @@ const test = createReducer => {
     expect(state.documents.C.name).toEqual('Notes')
     expect(state.canUndo).toBeFalsy()
     expect(state.canRedo).toBeTruthy()
+    state = reducer(state, {type: 'REDO'})
+    expect(state.documents.A.name).toEqual('Bill 2')
+    expect(state.documents.B.name).toEqual('Letter')
+    expect(state.documents.C.name).toEqual('Notes')
+    expect(state.canUndo).toBeTruthy()
+    expect(state.canRedo).toBeFalsy()
   })
 }
 
