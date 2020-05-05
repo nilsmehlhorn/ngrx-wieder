@@ -1,4 +1,4 @@
-import {Action, ActionReducer, On} from '@ngrx/store'
+import {Action, ActionReducer, INIT, On} from '@ngrx/store'
 import produce, {applyPatches, enablePatches, Patch, PatchListener} from 'immer'
 import {defaultConfig, PatchActionReducer, Patches, Segmenter, WiederConfig} from './model'
 
@@ -151,6 +151,10 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
   }
 
   return (state: S, action: A): S => {
+    if (action.type === INIT) {
+      // let reducer initialize state
+      return reducer(state, action)
+    }
     const accessors = patchAccessors(state)
     const {
       undoable: [getUndoable, setUndoable],
