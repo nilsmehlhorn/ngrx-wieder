@@ -71,7 +71,11 @@ export interface WiederConfig {
    * Whether ability for undo/redo should be tracked in the state
    * through properties `canUndo` and `canRedo`.
    */
-  track?: boolean
+  track?: boolean,
+  /**
+   * Override for active segmentation based on key resolved from action
+   */
+  segmentationOverride?: (action: Action) => string | number | undefined
 }
 
 export const defaultConfig: WiederConfig = {
@@ -83,7 +87,8 @@ export const defaultConfig: WiederConfig = {
   redoActionType: 'REDO',
   breakMergeActionType: 'BREAK_MERGE',
   clearActionType: 'CLEAR',
-  track: false
+  track: false,
+  segmentationOverride: () => undefined
 }
 
 

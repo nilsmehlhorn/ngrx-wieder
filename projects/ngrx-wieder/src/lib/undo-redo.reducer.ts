@@ -93,7 +93,8 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
     redoActionType,
     breakMergeActionType,
     clearActionType,
-    track
+    track,
+    segmentationOverride
   } = {...defaultConfig, ...config}
 
   const undoableMap: PatchMap = {}
@@ -143,8 +144,11 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
     }
   }
 
-  const patchAccessors = (state: S): PatchAccessors => {
-    const key = segmenter(state)
+  const segmentationKey = (state: S, action?: A): Key => {
+    return (action && segmentationOverride(action)) || segmenter(state)
+  }
+
+  const patchAccessors = (key: Key): PatchAccessors => {
     const undoableAccessor = patchAccessor(undoableMap, key)
     const undoneAccessor = patchAccessor(undoneMap, key)
     return {undoable: undoableAccessor, undone: undoneAccessor}
@@ -155,7 +159,8 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
       // let reducer initialize state
       return reducer(state, action)
     }
-    const accessors = patchAccessors(state)
+    const key = segmentationKey(state, action)
+    const accessors = patchAccessors(key)
     const {
       undoable: [getUndoable, setUndoable],
       undone: [getUndone, setUndone]
@@ -196,9 +201,10 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
           (patches, inversePatches) => recordPatches(accessors, action, patches, inversePatches)
           : undefined
         const nextState = reducer(state, action, listener)
-        // active patch-stack might have changed, segmentation change must not undoable
-        const nextAccessors = undoable ? accessors : patchAccessors(nextState)
-        return applyTracking(nextState, nextAccessors)
+        // due to segmentation override active patch-stack might be different
+        const trackingKey = segmentationKey(nextState)
+        const trackingAccessor = trackingKey !== key ? patchAccessors(trackingKey) : accessors
+        return applyTracking(nextState, trackingAccessor)
       }
     }
   }
