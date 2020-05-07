@@ -37,18 +37,23 @@ const initial: TestState = {
 
 const activeDocument = (state: TestState): Document => state.documents[state.activeDocument]
 
+const docOverrideProp = 'targetDocument'
+
 const nameChange = createAction('[Test] Name Change', props<{ name: string }>())
 const contentChange = createAction('[Test] Content Change', props<{ content: string }>())
 const documentSwitch = createAction('[Test] Document Switch', props<{ document: string }>())
-const all = union({nameChange, contentChange, documentSwitch})
+const nameChangeForDoc = createAction('[Test] Name Change For Doc', props<{ name: string, [docOverrideProp]: string}>())
+const all = union({nameChange, nameChangeForDoc, contentChange, documentSwitch})
 type Actions = typeof all
 
 const config = {
   allowedActionTypes: [
     nameChange.type,
+    nameChangeForDoc.type,
     contentChange.type
   ],
-  track: true
+  track: true,
+  segmentationOverride: action => action[docOverrideProp]
 }
 
 const segmenter = state => state.activeDocument
@@ -58,6 +63,9 @@ const createOnReducer = () => {
   return createSegmentedUndoRedoReducer(initial, segmenter,
     produceOn(nameChange, (state, action) => {
       activeDocument(state).name = action.name
+    }),
+    produceOn(nameChangeForDoc, (state, action) => {
+      state.documents[action[docOverrideProp]].name = action.name
     }),
     produceOn(contentChange, (state, action) => {
       activeDocument(state).content = action.content
@@ -75,6 +83,9 @@ const createSwitchReducer = () => {
       switch (action.type) {
         case nameChange.type:
           activeDocument(next).name = action.name
+          return
+        case nameChangeForDoc.type:
+          next.documents[action[docOverrideProp]].name = action.name
           return
         case contentChange.type:
           activeDocument(next).content = action.content
@@ -139,6 +150,26 @@ const test = createReducer => {
     expect(state.documents.C.name).toEqual('Notes')
     expect(state.canUndo).toBeTruthy()
     expect(state.canRedo).toBeFalsy()
+  })
+
+  it('should override segmentation', () => {
+    const reducer = createReducer()
+    let state = reducer(initial, nameChangeForDoc({name: 'Personal Notes', [docOverrideProp]: 'C'}))
+    expect(state.documents.A.name).toEqual('Bill')
+    expect(state.documents.B.name).toEqual('Letter')
+    expect(state.documents.C.name).toEqual('Personal Notes')
+    expect(state.canUndo).toBeFalsy()
+    expect(state.canRedo).toBeFalsy()
+    state = reducer(state, documentSwitch({document: 'C'}))
+    expect(state.activeDocument).toEqual('C')
+    expect(state.canUndo).toBeTruthy()
+    expect(state.canRedo).toBeFalsy()
+    state = reducer(state, {type: 'UNDO'})
+    expect(state.documents.A.name).toEqual('Bill')
+    expect(state.documents.B.name).toEqual('Letter')
+    expect(state.documents.C.name).toEqual('Notes')
+    expect(state.canUndo).toBeFalsy()
+    expect(state.canRedo).toBeTruthy()
   })
 }
 
