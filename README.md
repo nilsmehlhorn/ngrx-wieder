@@ -84,6 +84,7 @@ this.store.dispatch({ type: 'REDO' })
 | `breakMergeActionType`| `'BREAK_MERGE'` | Override for the break-merge action's type.
 | `clearActionType`| `'CLEAR'` | Override for the clear action's type
 | `track`| `false` | Whether ability for undo/redo should be tracked in the state through properties `canUndo` and `canRedo`
+| `segmentationOverride`| `(action: Action) => undefined` | Override for active segmentation based on key resolved from action
 
 ### Dealing with consecutive changes
 
@@ -237,4 +238,12 @@ const reducer = (state = initialState, action: Actions, listener?: PatchListener
         }
     }, listener)
 return wrapReducer(reducer, state => state.activeDocument)
+```
+
+You can override the segmentation based on an action by providing `segmentationOverride` to the config. This way you can target a specific - possibly non-active - segment with actions. For example, the actions from above could contain an optional property `targetDocument` which you'd resolve with the following `segmentationOverride`:
+```typescript
+const {createSegmentedUndoRedoReducer} = undoRedo({
+    ...
+    segmentationOverride: action => action.targetDocument
+})
 ```
