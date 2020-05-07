@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [3.1.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v3.0.1...v3.1.0) (2020-05-07)
+
+
+### Features
+
+* **segmentation-override:** enable segmentation override ([cf06862](https://github.com/nilsmehlhorn/ngrx-wieder/commit/cf068626cdd1b317c43e70eb5cfb64d659b05ddc))
+
 ### [3.0.1](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v3.0.1-next.1...v3.0.1) (2020-05-05)
 
 ### [3.0.1-next.1](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v3.0.1-next.0...v3.0.1-next.1) (2020-05-05)
