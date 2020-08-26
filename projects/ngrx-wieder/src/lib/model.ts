@@ -50,7 +50,7 @@ export interface WiederConfig {
    * Predicates for deciding whether differences from
    * two consecutive actions of the same type should be merged.
    */
-  mergeRules?: Map<string, MergeRule>
+  mergeRules?: {[key: string]: MergeRule}
   /**
    * Override for the undo action's type.
    */
@@ -81,7 +81,7 @@ export interface WiederConfig {
 export const defaultConfig: WiederConfig = {
   allowedActionTypes: [],
   mergeActionTypes: [],
-  mergeRules: new Map<string, MergeRule>(),
+  mergeRules: {},
   maxBufferSize: 32,
   undoActionType: 'UNDO',
   redoActionType: 'REDO',
