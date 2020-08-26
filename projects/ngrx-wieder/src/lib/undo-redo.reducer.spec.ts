@@ -237,9 +237,9 @@ const test = createReducer => {
   it('should merge actions based on merge rules', () => {
     let merge = true
     const redoReducer = createReducer({
-      mergeRules: new Map([
-        [incrementMood.type, () => merge]
-      ])
+      mergeRules:  {
+        [incrementMood.type]: () => merge
+      }
     })
     const intersectedState = redoReducer(redoReducer(redoReducer(initial,
       incrementMood()),

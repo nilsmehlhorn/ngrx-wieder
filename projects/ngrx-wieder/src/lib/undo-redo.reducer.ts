@@ -44,18 +44,19 @@ function create<S, A extends Action = Action>(initialState: S, ons: On<S>[], con
 
 type Key = string | number
 
-type PatchMap = {
-  [id in string | number]: Patches[]
+type KeyMap<T> = {
+  [id in string | number]: T
+}
+type Accessor<T> = [() => T, (t: T) => void]
+
+interface Accessors {
+  undoable: Accessor<Patches[]>
+  undone: Accessor<Patches[]>
+  lastAction: Accessor<Action>
+  mergeBroken: Accessor<boolean>
 }
 
-type PatchAccessor = [() => Patches[], (patches: Patches[]) => void]
-
-interface PatchAccessors {
-  undoable: PatchAccessor
-  undone: PatchAccessor
-}
-
-const patchAccessor = (map: PatchMap, key: Key): PatchAccessor => {
+const createPatchAccessor = (map: KeyMap<Patches[]>, key: Key): Accessor<Patches[]> => {
   return [
     () => {
       let patches = map[key]
@@ -68,11 +69,18 @@ const patchAccessor = (map: PatchMap, key: Key): PatchAccessor => {
   ]
 }
 
+const createAccessor = <T>(map: KeyMap<T>, key: Key): Accessor<T> => {
+  return [
+    () => map[key],
+    (t: T) => map[key] = t
+  ]
+}
+
 const tracker = <S>(track: boolean) => {
   if (!track) {
     return (state: S) => state
   }
-  return (state: S, accessors: PatchAccessors): S => {
+  return (state: S, accessors: Accessors): S => {
     const {undoable: [getUndoable], undone: [getUndone]} = accessors
     return {
       ...state,
@@ -97,32 +105,34 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
     segmentationOverride
   } = {...defaultConfig, ...config}
 
-  const undoableMap: PatchMap = {}
-  const undoneMap: PatchMap = {}
+  const undoableMap: KeyMap<Patches[]> = {}
+  const undoneMap: KeyMap<Patches[]> = {}
 
-  let lastAction: Action
-  let mergeBroken = false
+  const lastActions: KeyMap<Action> = {}
+  const mergeBrokens: KeyMap<boolean> = {}
 
   const isUndoable = (action: Action) => !allowedActionTypes.length ||
     allowedActionTypes.some(type => type === action.type)
 
   const shouldMerge = (a: Action, b: Action): boolean => {
-    return !mergeBroken && a.type === b.type
+    return a.type === b.type
       && (
         mergeActionTypes.includes(a.type)
-        || (mergeRules.get(a.type) ? mergeRules.get(a.type)(a, b) : false)
+        || (mergeRules[a.type]?.(a, b) ?? false)
       )
   }
 
   const applyTracking = tracker<S>(track)
 
-  const recordPatches = (accessors: PatchAccessors, action: Action, patches: Patch[], inversePatches: Patch[]) => {
+  const recordPatches = (accessors: Accessors, action: Action, patches: Patch[], inversePatches: Patch[]) => {
     const {
       undoable: [getUndoable, setUndoable],
-      undone: [getUndone, setUndone]
+      undone: [getUndone, setUndone],
+      lastAction: [getLastAction, setLastAction],
+      mergeBroken: [getMergeBroken, setMergeBroken]
     } = accessors
     if (patches.length) {
-      if (lastAction && shouldMerge(lastAction, action)) {
+      if (getLastAction() && !getMergeBroken() && shouldMerge(getLastAction(), action)) {
         setUndoable([
           {
             // merge patches for consecutive actions of same type
@@ -139,8 +149,8 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
         ])
       }
       setUndone([]) // clear redo stack
-      lastAction = action
-      mergeBroken = false
+      setLastAction(action)
+      setMergeBroken(false)
     }
   }
 
@@ -148,10 +158,13 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
     return (action && segmentationOverride(action)) || segmenter(state)
   }
 
-  const patchAccessors = (key: Key): PatchAccessors => {
-    const undoableAccessor = patchAccessor(undoableMap, key)
-    const undoneAccessor = patchAccessor(undoneMap, key)
-    return {undoable: undoableAccessor, undone: undoneAccessor}
+  const resolveAccessors = (key: Key): Accessors => {
+    return {
+      undoable: createPatchAccessor(undoableMap, key),
+      undone: createPatchAccessor(undoneMap, key),
+      lastAction: createAccessor(lastActions, key),
+      mergeBroken: createAccessor(mergeBrokens, key)
+    }
   }
 
   return (state: S, action: A): S => {
@@ -160,10 +173,12 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
       return reducer(state, action)
     }
     const key = segmentationKey(state, action)
-    const accessors = patchAccessors(key)
+    const accessors = resolveAccessors(key)
     const {
       undoable: [getUndoable, setUndoable],
-      undone: [getUndone, setUndone]
+      undone: [getUndone, setUndone],
+      lastAction: [getLastAction, setLastAction],
+      mergeBroken: [getMergeBroken, setMergeBroken]
     } = accessors
     switch (action.type) {
       case undoActionType: {
@@ -171,7 +186,7 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
         if (undoPatches) {
           // put patches on redo stack (Array.shift somehow breaks with AOT)
           setUndone([undoPatches].concat(getUndone()))
-          return applyTracking(applyPatches(state, undoPatches.inversePatches), accessors) // reverse
+          return reducer(applyTracking(applyPatches(state, undoPatches.inversePatches), accessors), action) // reverse
         }
         return state
       }
@@ -180,19 +195,19 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
         if (redoPatches) {
           // put patches on undo stack (Array.shift somehow breaks with AOT)
           setUndoable([redoPatches].concat(getUndoable()))
-          return applyTracking(applyPatches(state, redoPatches.patches), accessors) // replay
+          return reducer(applyTracking(applyPatches(state, redoPatches.patches), accessors), action) // replay
         }
         return state
       }
       case clearActionType: {
         setUndone([])
         setUndoable([])
-        mergeBroken = false
-        lastAction = null
+        setMergeBroken(false)
+        setLastAction(undefined)
         return applyTracking(state, accessors)
       }
       case breakMergeActionType: {
-        mergeBroken = true
+        setMergeBroken(true)
         return state
       }
       default: {
@@ -203,7 +218,7 @@ function wrap<S, A extends Action = Action>(reducer: PatchActionReducer<S, A>, c
         const nextState = reducer(state, action, listener)
         // due to segmentation override active patch-stack might be different
         const trackingKey = segmentationKey(nextState)
-        const trackingAccessor = trackingKey !== key ? patchAccessors(trackingKey) : accessors
+        const trackingAccessor = trackingKey !== key ? resolveAccessors(trackingKey) : accessors
         return applyTracking(nextState, trackingAccessor)
       }
     }

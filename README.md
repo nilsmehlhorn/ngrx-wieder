@@ -77,7 +77,7 @@ this.store.dispatch({ type: 'REDO' })
 |:---  |:--- | :---
 | `allowedActionTypes`| `[]` |Actions applicable for being undone/redone (leave empty to allow all actions)
 | `mergeActionTypes`| `[]` | Types of actions whose state difference should be merged when they appear consecutively
-| `mergeRules`| `new Map()` |Predicates for deciding whether differences from consecutive actions of the same type should be merged
+| `mergeRules`| `{}` | Predicate dictionary for deciding whether differences from consecutive actions of the same type should be merged. Use action type as key and predicate as value.
 | `maxBufferSize`| `32` | How many state differences should be buffered in either direction
 | `undoActionType`| `'UNDO'` | Override for the undo action's type
 | `redoActionType`| `'REDO'` | Override for the redo action's type
