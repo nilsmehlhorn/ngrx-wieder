@@ -22,9 +22,9 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@angular/common": "^8.0.1 - ^9.0.7",
-    "@angular/core": "^8.0.1 - ^9.0.7",
-    "@ngrx/store": "^8.5.0",
+    "@angular/common": "^10.0.0",
+    "@angular/core": "^10.0.0",
+    "@ngrx/store": "^10.0.0",
     "immer": "^6.0.3"
   },
   "dependencies": {
