@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.1](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v4.0.0...v4.0.1) (2020-12-13)
+
+
+### Bug Fixes
+
+* **api:** export produceOn ([#23](https://github.com/nilsmehlhorn/ngrx-wieder/issues/23)) ([82ef64b](https://github.com/nilsmehlhorn/ngrx-wieder/commit/82ef64b859ce9acf5761ace3d3b03fdb9b7fdc04))
+
 ## [4.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v3.1.1...v4.0.0) (2020-08-26)
 
 
