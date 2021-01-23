@@ -9,14 +9,6 @@ export interface PatchActionReducer<S, A extends Action = Action> extends Action
 }
 
 /**
- * Wrapper for patches between two different states.
- */
-export interface Patches {
-  patches: Patch[]
-  inversePatches: Patch[]
-}
-
-/**
  * Predicate for deciding whether differences from
  * two consecutive actions of the same type should be merged.
  */
@@ -68,11 +60,6 @@ export interface WiederConfig {
    */
   clearActionType?: string
   /**
-   * Whether ability for undo/redo should be tracked in the state
-   * through properties `canUndo` and `canRedo`.
-   */
-  track?: boolean,
-  /**
    * Override for active segmentation based on key resolved from action
    */
   segmentationOverride?: (action: Action) => string | number | undefined
@@ -87,7 +74,6 @@ export const defaultConfig: WiederConfig = {
   redoActionType: 'REDO',
   breakMergeActionType: 'BREAK_MERGE',
   clearActionType: 'CLEAR',
-  track: false,
   segmentationOverride: () => undefined
 }
 
