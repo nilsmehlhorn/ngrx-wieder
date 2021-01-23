@@ -1,4 +1,4 @@
-import {ActionCreator, ActionReducer, ActionType} from '@ngrx/store/src/models'
+import {ActionCreator, ActionReducer, ActionType} from '@ngrx/store'
 import {On} from '@ngrx/store'
 import {Draft} from 'immer'
 
