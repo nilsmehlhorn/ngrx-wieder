@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [4.0.2](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v4.0.1...v4.0.2) (2021-01-24)
+
+
+### Bug Fixes
+
+* remove deep import ([#27](https://github.com/nilsmehlhorn/ngrx-wieder/issues/27)) ([3133220](https://github.com/nilsmehlhorn/ngrx-wieder/commit/3133220d37ff6846b55674210fd03bc6f481376c))
+
 ### [4.0.1](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v4.0.0...v4.0.1) (2020-12-13)
 
 
