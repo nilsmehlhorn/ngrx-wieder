@@ -8,7 +8,7 @@ export interface Patches {
 
 export type Step = {
   patches: Patches;
-  action: Action;
+  actions: Action[];
 };
 
 export type History = {

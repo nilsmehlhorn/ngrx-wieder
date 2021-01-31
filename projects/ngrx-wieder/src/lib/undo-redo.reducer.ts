@@ -6,7 +6,13 @@ import {
   Segmenter,
   WiederConfig,
 } from "./config";
-import { DEFAULT_KEY, History, HistoryKey, Step, UndoRedoState } from "./undo-redo.state";
+import {
+  DEFAULT_KEY,
+  History,
+  HistoryKey,
+  Step,
+  UndoRedoState,
+} from "./undo-redo.state";
 
 export interface UndoRedo {
   createUndoRedoReducer: <S extends UndoRedoState, A extends Action = Action>(
@@ -90,6 +96,7 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
     breakMergeActionType,
     clearActionType,
     segmentationOverride,
+    trackActionPayload
   } = { ...defaultConfig, ...config };
 
   const isUndoable = (action: Action) =>
@@ -104,6 +111,16 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
     );
   };
 
+  const slimAction = (action: Action): Action => {
+    let track: boolean
+    if (typeof trackActionPayload === "boolean") {
+      track = trackActionPayload
+    } else {
+      track = trackActionPayload(action)
+    }
+    return track ? action : {type: action.type} 
+  }
+
   const segmentationKey = (state: S, action?: A): HistoryKey => {
     return (action && segmentationOverride(action)) || segmenter(state);
   };
@@ -114,7 +131,11 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
       return reducer(state, action);
     }
     const key = segmentationKey(state, action);
-    const history = state.histories[key] || {undoable: [], undone: [], mergeBroken: false};
+    const history = state.histories[key] || {
+      undoable: [],
+      undone: [],
+      mergeBroken: false,
+    };
     switch (action.type) {
       case undoActionType: {
         const [undoStep, ...remainingUndoable] = history.undoable;
@@ -187,10 +208,12 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
             const [lastStep, ...otherSteps] = history.undoable;
             let undoable: Step[];
             if (patches.length) {
+              const [lastAction, ...prevActions] = lastStep?.actions || [];
+              const slimmedAction: Action = slimAction(action)
               if (
-                lastStep?.action &&
+                lastAction &&
                 !history.mergeBroken &&
-                shouldMerge(lastStep.action, action)
+                shouldMerge(lastAction, action)
               ) {
                 undoable = [
                   {
@@ -202,14 +225,17 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
                         ...lastStep.patches.inversePatches,
                       ],
                     },
-                    action,
+                    actions: [slimmedAction, lastAction, ...prevActions],
                   },
                   ...otherSteps,
                 ];
               } else {
                 undoable = [
                   // remember differences while dropping at buffer max-size
-                  { patches: { patches, inversePatches }, action },
+                  {
+                    patches: { patches, inversePatches },
+                    actions: [slimmedAction],
+                  },
                   ...history.undoable.slice(0, maxBufferSize - 1),
                 ];
               }
