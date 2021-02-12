@@ -10,10 +10,12 @@ import { undoRedo } from "./undo-redo.reducer";
 import { defaultConfig, WiederConfig } from "./config";
 import { produceOn } from "./produce-on";
 import produce, { nothing, original, PatchListener } from "immer";
-import { id } from "./util/id";
+import { genId } from "./util/id";
 import {
   UndoRedoState,
   initialUndoRedoState,
+  DEFAULT_KEY,
+  Step,
 } from "./undo-redo.state";
 
 interface Todo {
@@ -37,21 +39,26 @@ const initial: TestState = {
 
 const populated: TestState = {
   todos: [
-    { id: id(), text: "Travel", checked: true },
-    { id: id(), text: "Relax", checked: false },
-    { id: id(), text: "Work", checked: false },
+    { id: genId(), text: "Travel", checked: true },
+    { id: genId(), text: "Relax", checked: false },
+    { id: genId(), text: "Work", checked: false },
   ],
   viewed: null,
   mood: 50,
   ...initialUndoRedoState,
 };
 
-const addTodo = createAction("[Test] Create Todo", props<{ text: string }>());
+const addTodo = createAction(
+  "[Test] Create Todo",
+  props<{ id: string; text: string }>()
+);
 const removeTodo = createAction("[Test] Remove Todo", props<{ id: string }>());
 const viewTodo = createAction("[Test] View Todo", props<{ id: string }>());
 const incrementMood = createAction("[Test] Increment Mood");
 const reset = createAction("[Test] Reset");
 const remove = createAction("[Test] Remove");
+const undo = createAction("UNDO");
+const redo = createAction("REDO");
 const all = union({
   addTodo,
   removeTodo,
@@ -67,7 +74,7 @@ const createOnReducer = (config = defaultConfig) => {
   return createUndoRedoReducer(
     initial,
     on(addTodo, (state, action) => {
-      state.todos.push({ id: id(), text: action.text, checked: false });
+      state.todos.push({ id: action.id, text: action.text, checked: false });
       return state;
     }),
     on(removeTodo, (state, action) => {
@@ -102,7 +109,11 @@ const createSwitchReducer = (config = defaultConfig) => {
         (next) => {
           switch (action.type) {
             case addTodo.type:
-              next.todos.push({ id: id(), text: action.text, checked: false });
+              next.todos.push({
+                id: action.id,
+                text: action.text,
+                checked: false,
+              });
               return;
             case removeTodo.type:
               next.todos.splice(
@@ -129,7 +140,7 @@ const createSwitchReducer = (config = defaultConfig) => {
   );
 };
 
-const getStateWithoutHistories = ({histories, ...state}: TestState) => state
+const getStateWithoutHistories = ({ histories, ...state }: TestState) => state;
 
 const expectToEqualWithoutHistory = (a: TestState, b: TestState) => {
   expect(getStateWithoutHistories(a)).toEqual(getStateWithoutHistories(b));
@@ -138,27 +149,42 @@ const expectToEqualWithoutHistory = (a: TestState, b: TestState) => {
 const test = (
   createReducer: (config?: WiederConfig) => ActionReducer<TestState, Action>
 ) => {
-  it("should undo any action", () => {
+  it("should undo and redo any action", () => {
     const redoReducer = createReducer();
-    const doneState = redoReducer(initial, addTodo({ text: "Do laundry" }));
-    expect(doneState.todos.length).toBe(1);
-    expect(doneState.todos[0].text).toEqual("Do laundry");
-    expect(doneState.todos[0].checked).toBeFalsy();
-    const undoneState = redoReducer(doneState, { type: "UNDO" });
-    expect(undoneState.todos.length).toBe(0);
-  });
-
-  it("should redo any action", () => {
-    const redoReducer = createReducer();
-    const doneState = redoReducer(initial, addTodo({ text: "Do laundry" }));
-    expect(doneState.todos.length).toBe(1);
-    expect(doneState.todos[0].text).toEqual("Do laundry");
-    expect(doneState.todos[0].checked).toBeFalsy();
-    const undoneState = redoReducer(doneState, { type: "UNDO" });
-    expect(undoneState.todos.length).toBe(0);
-    const redoneState = redoReducer(undoneState, { type: "REDO" });
-    expect(redoneState.todos.length).toBe(1);
-    expect(redoneState.todos[0].text).toEqual("Do laundry");
+    const id = genId();
+    const text = "Do laundry";
+    const todo = { id, text, checked: false };
+    const step: Step = {
+      patches: {
+        patches: [
+          {
+            op: "add",
+            path: ["todos", 0],
+            value: todo,
+          },
+        ],
+        inversePatches: [
+          { op: "replace", path: ["todos", "length"], value: 0 },
+        ],
+      },
+      actions: [{ type: addTodo.type }],
+    };
+    const doneState = redoReducer(initial, addTodo({ id, text }));
+    expect(doneState.todos).toEqual([todo]);
+    expect(doneState.histories[DEFAULT_KEY]).toEqual({
+      undoable: [step],
+      undone: [],
+      mergeBroken: false,
+    });
+    const undoneState = redoReducer(doneState, undo());
+    expect(undoneState.todos).toEqual([]);
+    expect(undoneState.histories[DEFAULT_KEY]).toEqual({
+      undoable: [],
+      undone: [step],
+      mergeBroken: false,
+    });
+    const redoneState = redoReducer(undoneState, redo());
+    expect(redoneState).toEqual(doneState)
   });
 
   describe("when initialized with allowed actions", () => {
@@ -178,7 +204,7 @@ const test = (
       expect(doneState.todos.length).toEqual(2);
       expect(doneState.todos[0].text).toEqual("Relax");
       expect(doneState.todos[0].id).toEqual(keepId);
-      const undoneState = redoReducer(doneState, { type: "UNDO" });
+      const undoneState = redoReducer(doneState, undo());
       expect(undoneState.todos.length).toBe(3);
       expect(undoneState.todos[0].text).toEqual("Travel");
       expect(undoneState.todos[0].id).toEqual(removeId);
@@ -192,12 +218,12 @@ const test = (
       expect(doneState.todos.length).toEqual(2);
       expect(doneState.todos[0].text).toEqual("Relax");
       expect(doneState.todos[0].id).toEqual(keepId);
-      const undoneState = redoReducer(doneState, { type: "UNDO" });
+      const undoneState = redoReducer(doneState, undo());
       expect(undoneState.todos.length).toBe(3);
       expect(undoneState.todos[0].text).toEqual("Travel");
       expect(undoneState.todos[0].id).toEqual(removeId);
       expect(undoneState.todos[0].checked).toBeTruthy();
-      const redoneState = redoReducer(undoneState, { type: "REDO" });
+      const redoneState = redoReducer(undoneState, redo());
       expect(redoneState.todos.length).toEqual(2);
       expect(redoneState.todos[0].text).toEqual("Relax");
       expect(redoneState.todos[0].id).toEqual(keepId);
@@ -208,7 +234,7 @@ const test = (
       const doneState = redoReducer(state, viewTodo({ id: viewId }));
       expect(doneState.viewed).toBeDefined();
       expect(doneState.viewed.id).toBe(viewId);
-      const undoneState = redoReducer(doneState, { type: "UNDO" });
+      const undoneState = redoReducer(doneState, undo());
       expect(undoneState).toEqual(doneState);
     });
     describe("when performing dis/allowed actions alternating", () => {
@@ -222,7 +248,7 @@ const test = (
         );
       });
       it("should keep updates from disallowed actions upon undo", () => {
-        const undoneState = redoReducer(doneState, { type: "UNDO" });
+        const undoneState = redoReducer(doneState, undo());
         expect(undoneState.todos.length).toBe(3);
         expect(undoneState.todos[0].text).toEqual("Travel");
         expect(undoneState.todos[0].id).toEqual(state.todos[0].id);
@@ -242,7 +268,7 @@ const test = (
       incrementMood()
     );
     expect(doneState.mood).toEqual(50);
-    const undoneState = redoReducer(doneState, { type: "UNDO" });
+    const undoneState = redoReducer(doneState, undo());
     expect(undoneState.mood).toEqual(20);
   });
 
@@ -263,9 +289,9 @@ const test = (
       incrementMood()
     );
     expect(doneState.mood).toEqual(70);
-    const undoneState = redoReducer(doneState, { type: "UNDO" });
+    const undoneState = redoReducer(doneState, undo());
     expect(undoneState.mood).toEqual(40);
-    const secondUndoneState = redoReducer(undoneState, { type: "UNDO" });
+    const secondUndoneState = redoReducer(undoneState, undo());
     expect(secondUndoneState.mood).toEqual(20);
   });
 
@@ -287,17 +313,18 @@ const test = (
       incrementMood()
     );
     expect(doneState.mood).toEqual(70);
-    const undoneState = redoReducer(doneState, { type: "UNDO" });
+    const undoneState = redoReducer(doneState, undo());
     expect(undoneState.mood).toEqual(60);
-    const secondUndoneState = redoReducer(undoneState, { type: "UNDO" });
+    const secondUndoneState = redoReducer(undoneState, undo());
     expect(secondUndoneState.mood).toEqual(50);
-    const thirdUndoneState = redoReducer(secondUndoneState, { type: "UNDO" });
+    const thirdUndoneState = redoReducer(secondUndoneState, undo());
     expect(thirdUndoneState.mood).toEqual(20);
   });
 
   it("should clear stack upon clear action", () => {
     const redoReducer = createReducer();
-    const doneState = redoReducer(initial, addTodo({ text: "Do laundry" }));
+    const id = genId();
+    const doneState = redoReducer(initial, addTodo({ id, text: "Do laundry" }));
     const {
       histories: doneStateHistory,
       ...doneStateWithoutHistory
@@ -306,7 +333,7 @@ const test = (
     expect(doneState.todos[0].text).toEqual("Do laundry");
     expect(doneState.todos[0].checked).toBeFalsy();
     const clearedState = redoReducer(doneState, { type: "CLEAR" });
-    const undoneState = redoReducer(clearedState, { type: "UNDO" });
+    const undoneState = redoReducer(clearedState, undo());
     const {
       histories: undoneStateHistory,
       ...undoneStateWithoutHistory
@@ -316,25 +343,27 @@ const test = (
 
   it("should handle state replacement", () => {
     const redoReducer = createReducer();
-    const doneState = redoReducer(initial, addTodo({ text: "Do laundry" }));
+    const id = genId();
+    const doneState = redoReducer(initial, addTodo({ id, text: "Do laundry" }));
     expect(doneState.todos.length).toBe(1);
     expect(doneState.todos[0].text).toEqual("Do laundry");
     expect(doneState.todos[0].checked).toBeFalsy();
     const replacedState = redoReducer(doneState, reset);
-    expectToEqualWithoutHistory(replacedState, initial)
-    const undoneState = redoReducer(replacedState, { type: "UNDO" });
-    expectToEqualWithoutHistory(undoneState, doneState)
+    expectToEqualWithoutHistory(replacedState, initial);
+    const undoneState = redoReducer(replacedState, undo());
+    expectToEqualWithoutHistory(undoneState, doneState);
   });
 
   it("should handle state removal", () => {
     const redoReducer = createReducer();
-    const doneState = redoReducer(initial, addTodo({ text: "Do laundry" }));
+    const id = genId();
+    const doneState = redoReducer(initial, addTodo({ id, text: "Do laundry" }));
     expect(doneState.todos.length).toBe(1);
     expect(doneState.todos[0].text).toEqual("Do laundry");
     expect(doneState.todos[0].checked).toBeFalsy();
     const replacedState = redoReducer(doneState, remove);
-    expect(Object.keys(getStateWithoutHistories(replacedState)).length).toBe(0)
-    const undoneState = redoReducer(replacedState, { type: "UNDO" });
+    expect(Object.keys(getStateWithoutHistories(replacedState)).length).toBe(0);
+    const undoneState = redoReducer(replacedState, undo());
     expectToEqualWithoutHistory(undoneState, doneState);
   });
 };
