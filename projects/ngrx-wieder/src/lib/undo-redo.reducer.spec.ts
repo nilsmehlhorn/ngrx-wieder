@@ -184,7 +184,37 @@ const test = (
       mergeBroken: false,
     });
     const redoneState = redoReducer(undoneState, redo());
-    expect(redoneState).toEqual(doneState)
+    expect(redoneState).toEqual(doneState);
+  });
+
+  it("should allow action payload in history", () => {
+    const redoReducer = createReducer({ trackActionPayload: true });
+    const id = genId();
+    const text = "Do laundry";
+    const todo = { id, text, checked: false };
+    const doneState = redoReducer(initial, addTodo({ id, text }));
+    expect(doneState.todos).toEqual([todo]);
+    expect(doneState.histories[DEFAULT_KEY]).toEqual({
+      undoable: [
+        {
+          patches: {
+            patches: [
+              {
+                op: "add",
+                path: ["todos", 0],
+                value: todo,
+              },
+            ],
+            inversePatches: [
+              { op: "replace", path: ["todos", "length"], value: 0 },
+            ],
+          },
+          actions: [{ type: addTodo.type, id, text } as Action],
+        },
+      ],
+      undone: [],
+      mergeBroken: false,
+    });
   });
 
   describe("when initialized with allowed actions", () => {
