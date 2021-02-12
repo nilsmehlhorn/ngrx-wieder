@@ -118,7 +118,7 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
     } else {
       track = trackActionPayload(action)
     }
-    return track ? action : {type: action.type} 
+    return track ? action : {type: action.type}
   }
 
   const segmentationKey = (state: S, action?: A): HistoryKey => {
