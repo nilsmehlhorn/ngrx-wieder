@@ -12,6 +12,7 @@
   ],
   "include": [
     "**/*.spec.ts",
+    "src/lib/test-util/**/*.ts",
     "**/*.d.ts"
   ]
 }
