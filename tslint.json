@@ -70,10 +70,6 @@
     ],
     "object-literal-sort-keys": false,
     "ordered-imports": false,
-    "quotemark": [
-      true,
-      "single"
-    ],
     "space-before-function-paren": {
       "options": {
         "anonymous": "never",
@@ -112,8 +108,7 @@
     "use-pipe-transform-interface": true,
     "component-class-suffix": true,
     "directive-class-suffix": true,
-    "semicolon": [true, "never"]
-  ,    "variable-name": {
+    "variable-name": {
       "options": [
         "ban-keywords",
         "check-format",
@@ -130,5 +125,5 @@
         "check-typecast"
       ]
     }
-}
+  }
 }
