@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [5.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v4.0.2...v5.0.0) (2021-03-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* undo-redo reducer state changed
+
+### Features
+
+* move history into state ([#29](https://github.com/nilsmehlhorn/ngrx-wieder/issues/29)) ([41581a6](https://github.com/nilsmehlhorn/ngrx-wieder/commit/41581a6b8d28ef8c27797aed059a8f8fb7b8ceeb))
+
 ### [4.0.2](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v4.0.1...v4.0.2) (2021-01-24)
 
 
