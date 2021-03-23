@@ -1,4 +1,10 @@
-import { Action, ActionReducer, INIT, On } from "@ngrx/store";
+import {
+  Action,
+  ActionCreator,
+  ActionReducer,
+  INIT,
+  ReducerTypes,
+} from "@ngrx/store";
 import produce, { applyPatches, enablePatches, PatchListener } from "immer";
 import {
   defaultConfig,
@@ -17,7 +23,7 @@ import {
 export interface UndoRedo {
   createUndoRedoReducer: <S extends UndoRedoState, A extends Action = Action>(
     initialState: S,
-    ...ons: On<S>[]
+    ...ons: ReducerTypes<S, ActionCreator[]>[]
   ) => ActionReducer<S, A>;
   createSegmentedUndoRedoReducer: <
     S extends UndoRedoState,
@@ -25,7 +31,7 @@ export interface UndoRedo {
   >(
     initialState: S,
     segmenter: Segmenter<S>,
-    ...ons: On<S>[]
+    ...ons: ReducerTypes<S, ActionCreator[]>[]
   ) => ActionReducer<S, A>;
   wrapReducer: <S extends UndoRedoState, A extends Action = Action>(
     reducer: PatchActionReducer<S, A>,
@@ -38,12 +44,12 @@ export function undoRedo(config: WiederConfig = {}): UndoRedo {
   return {
     createUndoRedoReducer: <S extends UndoRedoState>(
       initialState: S,
-      ...ons: On<S>[]
+      ...ons: ReducerTypes<S, ActionCreator[]>[]
     ) => create(initialState, ons, config),
     createSegmentedUndoRedoReducer: <S extends UndoRedoState>(
       initialState: S,
       segmenter: Segmenter<S>,
-      ...ons: On<S>[]
+      ...ons: ReducerTypes<S, ActionCreator[]>[]
     ) => create(initialState, ons, config, segmenter),
     wrapReducer: (reducer, segmenter) => wrap(reducer, config, segmenter),
   };
@@ -51,7 +57,7 @@ export function undoRedo(config: WiederConfig = {}): UndoRedo {
 
 function create<S extends UndoRedoState, A extends Action = Action>(
   initialState: S,
-  ons: On<S>[],
+  ons: ReducerTypes<S, ActionCreator[]>[],
   config: WiederConfig,
   segmenter?: Segmenter<S>
 ) {
@@ -96,7 +102,7 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
     breakMergeActionType,
     clearActionType,
     segmentationOverride,
-    trackActionPayload
+    trackActionPayload,
   } = { ...defaultConfig, ...config };
 
   const isUndoable = (action: Action) =>
@@ -112,14 +118,14 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
   };
 
   const slimAction = (action: Action): Action => {
-    let track: boolean
+    let track: boolean;
     if (typeof trackActionPayload === "boolean") {
-      track = trackActionPayload
+      track = trackActionPayload;
     } else {
-      track = trackActionPayload(action)
+      track = trackActionPayload(action);
     }
-    return track ? action : {type: action.type}
-  }
+    return track ? action : { type: action.type };
+  };
 
   const segmentationKey = (state: S, action?: A): HistoryKey => {
     return (action && segmentationOverride(action)) || segmenter(state);
@@ -209,7 +215,7 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
             let undoable: Step[];
             if (patches.length) {
               const [lastAction, ...prevActions] = lastStep?.actions || [];
-              const slimmedAction: Action = slimAction(action)
+              const slimmedAction: Action = slimAction(action);
               if (
                 lastAction &&
                 !history.mergeBroken &&
