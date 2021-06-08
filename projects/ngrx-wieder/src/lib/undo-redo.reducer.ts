@@ -132,8 +132,7 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
   };
 
   return (state: S, action: A): S => {
-    if (action.type === INIT) {
-      // let reducer initialize state
+    if (state == null) {
       return reducer(state, action);
     }
     const key = segmentationKey(state, action);
