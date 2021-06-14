@@ -4,6 +4,7 @@ import {
   ActionReducer,
   INIT,
   ReducerTypes,
+  UPDATE,
 } from "@ngrx/store";
 import produce, { applyPatches, enablePatches, PatchListener } from "immer";
 import {
@@ -132,8 +133,7 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
   };
 
   return (state: S, action: A): S => {
-    if (action.type === INIT) {
-      // let reducer initialize state
+    if (action.type === INIT || action.type === UPDATE) {
       return reducer(state, action);
     }
     const key = segmentationKey(state, action);
