@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [6.0.2](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v6.0.1...v6.0.2) (2021-06-23)
+
+
+### Bug Fixes
+
+* state undefined for features ([#42](https://github.com/nilsmehlhorn/ngrx-wieder/issues/42)) ([c31713a](https://github.com/nilsmehlhorn/ngrx-wieder/commit/c31713ac3bd303a2b21adb3cda9aae473c176078))
+
 ### [6.0.1](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v6.0.0...v6.0.1) (2021-06-14)
 
 
