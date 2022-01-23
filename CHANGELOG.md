@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [8.0.1](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v8.0.0...v8.0.1) (2022-01-23)
+
+
+### Bug Fixes
+
+* **deps:** angular 13 peer dependencies ([5ad56ac](https://github.com/nilsmehlhorn/ngrx-wieder/commit/5ad56ac388e6c0d54ea5728a4879225d658ea880))
+
 ## [8.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v7.0.0...v8.0.0) (2022-01-23)
 
 
