@@ -40,7 +40,7 @@ describe("UndoRedo Selectors", () => {
       mergeBroken: false,
     };
     expect(
-      selectHistory.projector({
+      selectHistory().projector({
         todos: [todo],
         viewed: null,
         mood: 50,
@@ -49,15 +49,15 @@ describe("UndoRedo Selectors", () => {
         },
       })
     ).toEqual(undoableHistory);
-    expect(selectCanUndo.projector(undoableHistory)).toBeTruthy();
-    expect(selectCanRedo.projector(undoableHistory)).toBeFalsy();
+    expect(selectCanUndo().projector(undoableHistory)).toBeTruthy();
+    expect(selectCanRedo().projector(undoableHistory)).toBeFalsy();
     const redoableHistory: History = {
       undoable: [],
       undone: [step],
       mergeBroken: false,
     };
-    expect(selectCanUndo.projector(redoableHistory)).toBeFalsy();
-    expect(selectCanRedo.projector(redoableHistory)).toBeTruthy();
+    expect(selectCanUndo().projector(redoableHistory)).toBeFalsy();
+    expect(selectCanRedo().projector(redoableHistory)).toBeTruthy();
   });
 
   it("should support empty history", () => {
@@ -72,36 +72,36 @@ describe("UndoRedo Selectors", () => {
       ...TestStore.initialState,
       histories: {},
     };
-    const history = selectHistory.projector(state);
+    const history = selectHistory().projector(state);
     expect(history).toBeUndefined();
-    expect(selectCanUndo.projector(history)).toBeFalsy();
-    expect(selectCanRedo.projector(history)).toBeFalsy();
+    expect(selectCanUndo().projector(history)).toBeFalsy();
+    expect(selectCanRedo().projector(history)).toBeFalsy();
   });
 
   describe("with segmentation", () => {
     const state: SegmentedStore.TestState = {
-      activeDocument: "A",
+      activeDocument: "a",
       documents: {
-        A: { name: "Bill 2", content: "Total 100$" },
-        B: { name: "Letter", content: "Dear ..." },
-        C: { name: "Notes", content: "Write more tests" },
+        a: { name: "Bill 2", content: "Total 100$" },
+        b: { name: "Letter", content: "Dear ..." },
+        c: { name: "Notes", content: "Write more tests" },
       },
       histories: {
-        A: {
+        a: {
           undoable: [
             {
               patches: {
                 patches: [
                   {
                     op: "replace",
-                    path: ["documents", "A", "name"],
+                    path: ["documents", "a", "name"],
                     value: "Bill 2",
                   },
                 ],
                 inversePatches: [
                   {
                     op: "replace",
-                    path: ["documents", "A", "name"],
+                    path: ["documents", "a", "name"],
                     value: "Bill",
                   },
                 ],
@@ -112,7 +112,7 @@ describe("UndoRedo Selectors", () => {
           undone: [],
           mergeBroken: false,
         },
-        B: {
+        b: {
           undoable: [],
           undone: [
             {
@@ -120,14 +120,14 @@ describe("UndoRedo Selectors", () => {
                 patches: [
                   {
                     op: "replace",
-                    path: ["documents", "B", "name"],
+                    path: ["documents", "b", "name"],
                     value: "Letter 2",
                   },
                 ],
                 inversePatches: [
                   {
                     op: "replace",
-                    path: ["documents", "B", "name"],
+                    path: ["documents", "b", "name"],
                     value: "Letter",
                   },
                 ],
@@ -150,16 +150,16 @@ describe("UndoRedo Selectors", () => {
     });
 
     it("should select active history", () => {
-      const history = selectors.selectHistory.projector(state);
-      expect(history).toEqual(state.histories.A);
-      expect(selectors.selectCanUndo.projector(history)).toBeTruthy();
-      expect(selectors.selectCanRedo.projector(history)).toBeFalsy();
+      const history = selectors.selectHistory().projector(state);
+      expect(history).toEqual(state.histories.a);
+      expect(selectors.selectCanUndo().projector(history)).toBeTruthy();
+      expect(selectors.selectCanRedo().projector(history)).toBeFalsy();
     });
     it("should allow key override", () => {
-      const history = selectors.selectHistory.projector(state, { key: "B" });
-      expect(history).toEqual(state.histories.B);
-      expect(selectors.selectCanUndo.projector(history)).toBeFalsy();
-      expect(selectors.selectCanRedo.projector(history)).toBeTruthy();
+      const history = selectors.selectHistory({ key: "b" }).projector(state);
+      expect(history).toEqual(state.histories.b);
+      expect(selectors.selectCanUndo().projector(history)).toBeFalsy();
+      expect(selectors.selectCanRedo().projector(history)).toBeTruthy();
     });
   });
 });

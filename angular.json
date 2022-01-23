@@ -28,12 +28,22 @@
             "tsConfig": "projects/ngrx-wieder/tsconfig.spec.json",
             "karmaConfig": "projects/ngrx-wieder/karma.conf.js"
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/ngrx-wieder/**/*.ts",
+              "projects/ngrx-wieder/**/*.html"
+            ]
+          }
         }
       }
     }
   },
   "defaultProject": "ngrx-wieder",
   "cli": {
-    "analytics": true
+    "analytics": true,
+    "defaultCollection": "@angular-eslint/schematics"
   }
 }

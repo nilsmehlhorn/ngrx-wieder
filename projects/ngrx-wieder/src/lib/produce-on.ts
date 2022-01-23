@@ -17,9 +17,9 @@ type ExtractActionTypes<Creators extends readonly ActionCreator[]> = {
     : never;
 };
 
-export function produceOn<S, Creators extends ActionCreator[]>(
+export const produceOn = <S, Creators extends ActionCreator[]>(
   ...args: [...creators: Creators, reducer: ProduceOnReducer<S, Creators>]
-): ReducerTypes<S, Creators> {
+): ReducerTypes<S, Creators> => {
   const reducer = args.pop() as ActionReducer<S>;
   const types = (((args as unknown) as Creators).map(
     (creator) => creator.type
