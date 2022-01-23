@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [8.0.2](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v8.0.1...v8.0.2) (2022-01-23)
+
+
+### Bug Fixes
+
+* **deps:** immer peer dependency ([007a1ec](https://github.com/nilsmehlhorn/ngrx-wieder/commit/007a1ec783e0bb72077f678b71debd0824067b08))
+
 ### [8.0.1](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v8.0.0...v8.0.1) (2022-01-23)
 
 
