@@ -25,7 +25,7 @@
     "@angular/common": "^13.0.0",
     "@angular/core": "^13.0.0",
     "@ngrx/store": "^13.0.0",
-    "immer": "^6.0.3 - ^9.0.0"
+    "immer": "6.X - 9.X"
   },
   "dependencies": {
     "tslib": "^2.0.0"
