@@ -1,24 +1,21 @@
 import {
   Action,
   ActionCreator,
-  ActionReducer,
-  INIT,
-  ReducerTypes,
-  UPDATE,
+  ActionReducer, ReducerTypes
 } from "@ngrx/store";
 import produce, { applyPatches, enablePatches, PatchListener } from "immer";
 import {
   defaultConfig,
   PatchActionReducer,
   Segmenter,
-  WiederConfig,
+  WiederConfig
 } from "./config";
 import {
   DEFAULT_KEY,
   History,
   HistoryKey,
   Step,
-  UndoRedoState,
+  UndoRedoState
 } from "./undo-redo.state";
 
 export interface UndoRedo {
@@ -40,7 +37,7 @@ export interface UndoRedo {
   ) => ActionReducer<S, A>;
 }
 
-export function undoRedo(config: WiederConfig = {}): UndoRedo {
+export const undoRedo = (config: WiederConfig = {}): UndoRedo => {
   enablePatches();
   return {
     createUndoRedoReducer: <S extends UndoRedoState>(
@@ -54,14 +51,14 @@ export function undoRedo(config: WiederConfig = {}): UndoRedo {
     ) => create(initialState, ons, config, segmenter),
     wrapReducer: (reducer, segmenter) => wrap(reducer, config, segmenter),
   };
-}
+};
 
-function create<S extends UndoRedoState, A extends Action = Action>(
+const create = <S extends UndoRedoState, A extends Action = Action>(
   initialState: S,
   ons: ReducerTypes<S, ActionCreator[]>[],
   config: WiederConfig,
   segmenter?: Segmenter<S>
-) {
+) => {
   const map: { [key: string]: ActionReducer<S, A> } = {};
   for (const on of ons) {
     for (const type of on.types) {
@@ -86,13 +83,13 @@ function create<S extends UndoRedoState, A extends Action = Action>(
     return state;
   }) as PatchActionReducer<S, A>;
   return wrap(reducer, config, segmenter);
-}
+};
 
-function wrap<S extends UndoRedoState, A extends Action = Action>(
+const wrap = <S extends UndoRedoState, A extends Action = Action>(
   reducer: PatchActionReducer<S, A>,
   config: WiederConfig,
   segmenter: Segmenter<S> = () => DEFAULT_KEY
-) {
+) => {
   const {
     allowedActionTypes,
     mergeActionTypes,
@@ -110,13 +107,10 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
     !allowedActionTypes.length ||
     allowedActionTypes.some((type) => type === action.type);
 
-  const shouldMerge = (a: Action, b: Action): boolean => {
-    return (
-      a.type === b.type &&
-      (mergeActionTypes.includes(a.type) ||
-        (mergeRules[a.type]?.(a, b) ?? false))
-    );
-  };
+  const shouldMerge = (a: Action, b: Action): boolean =>
+    a.type === b.type &&
+    (mergeActionTypes.includes(a.type) ||
+      (mergeRules[a.type]?.(a, b) ?? false));
 
   const slimAction = (action: Action): Action => {
     let track: boolean;
@@ -128,9 +122,8 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
     return track ? action : { type: action.type };
   };
 
-  const segmentationKey = (state: S, action?: A): HistoryKey => {
-    return (action && segmentationOverride(action)) || segmenter(state);
-  };
+  const segmentationKey = (state: S, action?: A): HistoryKey =>
+    (action && segmentationOverride(action)) || segmenter(state);
 
   return (state: S, action: A): S => {
     if (!state) {
@@ -267,4 +260,4 @@ function wrap<S extends UndoRedoState, A extends Action = Action>(
       }
     }
   };
-}
+};

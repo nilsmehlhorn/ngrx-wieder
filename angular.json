@@ -30,14 +30,11 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@angular-eslint/builder:lint",
           "options": {
-            "tsConfig": [
-              "projects/ngrx-wieder/tsconfig.lib.json",
-              "projects/ngrx-wieder/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
+            "lintFilePatterns": [
+              "projects/ngrx-wieder/**/*.ts",
+              "projects/ngrx-wieder/**/*.html"
             ]
           }
         }
@@ -46,6 +43,7 @@
   },
   "defaultProject": "ngrx-wieder",
   "cli": {
-    "analytics": true
+    "analytics": true,
+    "defaultCollection": "@angular-eslint/schematics"
   }
 }

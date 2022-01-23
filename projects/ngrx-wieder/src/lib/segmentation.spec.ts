@@ -14,53 +14,53 @@ const test = (createReducer: () => ActionReducer<TestState, Action>) => {
   it("should undo by segmentation", () => {
     const reducer = createReducer();
     let state = reducer(initialState, nameChange({ name: "Bill 2" }));
-    expect(state.documents.A.name).toEqual("Bill 2");
-    expect(state.documents.B.name).toEqual("Letter");
-    expect(state.documents.C.name).toEqual("Notes");
-    state = reducer(state, documentSwitch({ document: "B" }));
-    expect(state.activeDocument).toEqual("B");
-    expect(state.documents.A.name).toEqual("Bill 2");
-    expect(state.documents.B.name).toEqual("Letter");
-    expect(state.documents.C.name).toEqual("Notes");
+    expect(state.documents.a.name).toEqual("Bill 2");
+    expect(state.documents.b.name).toEqual("Letter");
+    expect(state.documents.c.name).toEqual("Notes");
+    state = reducer(state, documentSwitch({ document: "b" }));
+    expect(state.activeDocument).toEqual("b");
+    expect(state.documents.a.name).toEqual("Bill 2");
+    expect(state.documents.b.name).toEqual("Letter");
+    expect(state.documents.c.name).toEqual("Notes");
     state = reducer(state, nameChange({ name: "Letter 2" }));
-    expect(state.documents.A.name).toEqual("Bill 2");
-    expect(state.documents.B.name).toEqual("Letter 2");
-    expect(state.documents.C.name).toEqual("Notes");
+    expect(state.documents.a.name).toEqual("Bill 2");
+    expect(state.documents.b.name).toEqual("Letter 2");
+    expect(state.documents.c.name).toEqual("Notes");
     state = reducer(state, { type: "UNDO" });
-    expect(state.documents.A.name).toEqual("Bill 2");
-    expect(state.documents.B.name).toEqual("Letter");
-    expect(state.documents.C.name).toEqual("Notes");
+    expect(state.documents.a.name).toEqual("Bill 2");
+    expect(state.documents.b.name).toEqual("Letter");
+    expect(state.documents.c.name).toEqual("Notes");
     state = reducer(state, { type: "UNDO" });
-    expect(state.documents.A.name).toEqual("Bill 2");
-    expect(state.documents.B.name).toEqual("Letter");
-    expect(state.documents.C.name).toEqual("Notes");
-    state = reducer(state, documentSwitch({ document: "A" }));
-    expect(state.activeDocument).toEqual("A");
+    expect(state.documents.a.name).toEqual("Bill 2");
+    expect(state.documents.b.name).toEqual("Letter");
+    expect(state.documents.c.name).toEqual("Notes");
+    state = reducer(state, documentSwitch({ document: "a" }));
+    expect(state.activeDocument).toEqual("a");
     state = reducer(state, { type: "UNDO" });
-    expect(state.documents.A.name).toEqual("Bill");
-    expect(state.documents.B.name).toEqual("Letter");
-    expect(state.documents.C.name).toEqual("Notes");
+    expect(state.documents.a.name).toEqual("Bill");
+    expect(state.documents.b.name).toEqual("Letter");
+    expect(state.documents.c.name).toEqual("Notes");
     state = reducer(state, { type: "REDO" });
-    expect(state.documents.A.name).toEqual("Bill 2");
-    expect(state.documents.B.name).toEqual("Letter");
-    expect(state.documents.C.name).toEqual("Notes");
+    expect(state.documents.a.name).toEqual("Bill 2");
+    expect(state.documents.b.name).toEqual("Letter");
+    expect(state.documents.c.name).toEqual("Notes");
   });
 
   it("should override segmentation", () => {
     const reducer = createReducer();
     let state = reducer(
       initialState,
-      nameChangeForDoc({ name: "Personal Notes", [docOverrideProp]: "C" })
+      nameChangeForDoc({ name: "Personal Notes", [docOverrideProp]: "c" })
     );
-    expect(state.documents.A.name).toEqual("Bill");
-    expect(state.documents.B.name).toEqual("Letter");
-    expect(state.documents.C.name).toEqual("Personal Notes");
-    state = reducer(state, documentSwitch({ document: "C" }));
-    expect(state.activeDocument).toEqual("C");
+    expect(state.documents.a.name).toEqual("Bill");
+    expect(state.documents.b.name).toEqual("Letter");
+    expect(state.documents.c.name).toEqual("Personal Notes");
+    state = reducer(state, documentSwitch({ document: "c" }));
+    expect(state.activeDocument).toEqual("c");
     state = reducer(state, { type: "UNDO" });
-    expect(state.documents.A.name).toEqual("Bill");
-    expect(state.documents.B.name).toEqual("Letter");
-    expect(state.documents.C.name).toEqual("Notes");
+    expect(state.documents.a.name).toEqual("Bill");
+    expect(state.documents.b.name).toEqual("Letter");
+    expect(state.documents.c.name).toEqual("Notes");
   });
 };
 

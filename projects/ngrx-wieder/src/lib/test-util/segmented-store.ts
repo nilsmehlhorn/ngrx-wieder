@@ -19,17 +19,17 @@ export interface TestState extends UndoRedoState {
 }
 
 export const initialState: TestState = {
-  activeDocument: "A",
+  activeDocument: "a",
   documents: {
-    A: {
+    a: {
       name: "Bill",
       content: "Total 100$",
     },
-    B: {
+    b: {
       name: "Letter",
       content: "Dear ...",
     },
-    C: {
+    c: {
       name: "Notes",
       content: "Write more tests",
     },

@@ -101,14 +101,14 @@ this.store.dispatch({ type: "REDO" });
 
 ### History Selectors
 
-You can access the undo-redo history through the included selectors after passing a selector that leads to the corresponding state feature to the  `createHistorySelectors` factory function (you can pass a [segmenter](#segmentation) as a second parameter):
+You can access the undo-redo history through the included selectors after passing a selector that leads to your corresponding state feature to the  `createHistorySelectors` factory function (you can also pass a [segmenter](#segmentation) as a second parameter):
 
 ```typescript
 // todo.selectors.ts
 import { createHistorySelectors } from "ngrx-wieder";
 
 // in this example the whole state is undoable
-// otherwise return featre state
+// otherwise return feature state
 const selectFeature = (state: State) => state;
 export const {
   selectHistory,
@@ -130,14 +130,14 @@ import * as fromTodo from "../todo.selectors";
   `,
 })
 export class UndoRedoComponent {
-  canUndo$ = this.store.select(fromTodo.selectCanUndo);
-  canRedo$ = this.store.select(fromTodo.selectCanRedo);
+  canUndo$ = this.store.select(fromTodo.selectCanUndo());
+  canRedo$ = this.store.select(fromTodo.selectCanRedo());
 
   constructor(private store: Store) {}
 }
 ```
 
-If you're using segmentation, you can override the history key by passing an object with a `key` property as [selection properties](https://ngrx.io/guide/store/selectors#using-selectors-with-props).
+If you're using segmentation, you can override the history key by passing an object with a `key` property to the selector factory functions.
 
 ### Dealing with consecutive changes
 

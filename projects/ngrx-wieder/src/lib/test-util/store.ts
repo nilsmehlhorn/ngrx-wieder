@@ -88,12 +88,8 @@ export const createOnReducer = (config = defaultConfig) => {
     produceOn(incrementMood, (state) => {
       state.mood = Math.min(original(state).mood + 10, 100);
     }),
-    on(reset, () => {
-      return initialState;
-    }),
-    produceOn(remove, () => {
-      return (nothing as unknown) as TestState;
-    })
+    on(reset, () => initialState),
+    produceOn(remove, () => (nothing as unknown) as TestState)
   );
 };
 
