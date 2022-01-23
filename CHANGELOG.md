@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [8.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v7.0.0...v8.0.0) (2022-01-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** Angular 13 and history selectors are now factory selectors
+
+### build
+
+* **deps:** update to angular 13 ([#56](https://github.com/nilsmehlhorn/ngrx-wieder/issues/56)) ([a689f05](https://github.com/nilsmehlhorn/ngrx-wieder/commit/a689f0598a99aa32a8d952bceb1ca0b63881d394))
+
 ## [7.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v6.0.2...v7.0.0) (2021-08-21)
 
 
