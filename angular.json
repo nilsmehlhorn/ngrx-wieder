@@ -42,9 +42,10 @@
       }
     }
   },
-  "defaultProject": "ngrx-wieder",
   "cli": {
     "analytics": true,
-    "defaultCollection": "@angular-eslint/schematics"
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   }
 }
