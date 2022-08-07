@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [9.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v8.0.2...v9.0.0) (2022-08-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** Angular 14
+
+### build
+
+* **deps:** update to angular 14 ([#68](https://github.com/nilsmehlhorn/ngrx-wieder/issues/68)) ([b318a0c](https://github.com/nilsmehlhorn/ngrx-wieder/commit/b318a0cd9f54f5fe6f6d3da4dc8d2b410907d514))
+
 ### [8.0.2](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v8.0.1...v8.0.2) (2022-01-23)
 
 
