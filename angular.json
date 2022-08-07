@@ -27,7 +27,9 @@
             "main": "projects/ngrx-wieder/src/test.ts",
             "tsConfig": "projects/ngrx-wieder/tsconfig.spec.json",
             "karmaConfig": "projects/ngrx-wieder/karma.conf.js",
-            "codeCoverageExclude": ["projects/ngrx-wieder/src/lib/test-util/**/*"]
+            "codeCoverageExclude": [
+              "projects/ngrx-wieder/src/lib/test-util/**/*"
+            ]
           }
         },
         "lint": {
@@ -42,9 +44,10 @@
       }
     }
   },
-  "defaultProject": "ngrx-wieder",
   "cli": {
     "analytics": true,
-    "defaultCollection": "@angular-eslint/schematics"
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   }
 }
