@@ -67,6 +67,6 @@
     "protractor": "~7.0.0",
     "standard-version": "^8.0.2",
     "ts-node": "~9.1.1",
-    "typescript": "~4.7.4"
+    "typescript": "~4.8.4"
   }
 }
