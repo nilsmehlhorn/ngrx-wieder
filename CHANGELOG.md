@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [10.0.2](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v10.0.1...v10.0.2) (2023-01-13)
+
+
+### Bug Fixes
+
+* immer default import ([#78](https://github.com/nilsmehlhorn/ngrx-wieder/issues/78)) ([545b9b5](https://github.com/nilsmehlhorn/ngrx-wieder/commit/545b9b591f290fda57d64ccf5ddd30b84c7d8b49))
+
 ### [10.0.1](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v10.0.0...v10.0.1) (2023-01-04)
 
 ## [10.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v9.0.0...v10.0.0) (2023-01-04)
