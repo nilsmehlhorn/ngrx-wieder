@@ -3,7 +3,7 @@ import {
   ActionCreator,
   ActionReducer, ReducerTypes
 } from "@ngrx/store";
-import produce, { applyPatches, enablePatches, PatchListener } from "immer";
+import { applyPatches, enablePatches, PatchListener, produce } from "immer";
 import {
   defaultConfig,
   PatchActionReducer,
