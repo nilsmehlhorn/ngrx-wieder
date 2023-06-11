@@ -18,6 +18,7 @@ import {
 } from "./test-util/store";
 import { DEFAULT_KEY, Step } from "./undo-redo.state";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getStateWithoutHistories = ({ histories, ...state }: TestState) => state;
 
 const expectToEqualWithoutHistory = (a: TestState, b: TestState) => {
@@ -237,6 +238,7 @@ const test = (
       addTodo({ id, text: "Do laundry" })
     );
     const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       histories: doneStateHistory,
       ...doneStateWithoutHistory
     } = doneState;
@@ -246,6 +248,7 @@ const test = (
     const clearedState = redoReducer(doneState, { type: "CLEAR" });
     const undoneState = redoReducer(clearedState, undo());
     const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       histories: undoneStateHistory,
       ...undoneStateWithoutHistory
     } = undoneState;
