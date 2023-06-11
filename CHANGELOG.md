@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [11.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v10.0.1...v11.0.0) (2023-06-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* Angular 16
+
+### Bug Fixes
+
+* immer default import ([#78](https://github.com/nilsmehlhorn/ngrx-wieder/issues/78)) ([545b9b5](https://github.com/nilsmehlhorn/ngrx-wieder/commit/545b9b591f290fda57d64ccf5ddd30b84c7d8b49))
+
+
+*  build(deps): update to angular 16 (#84) ([f5cbea1](https://github.com/nilsmehlhorn/ngrx-wieder/commit/f5cbea19f98f40b3fef7eed760bc3919344ffd74)), closes [#84](https://github.com/nilsmehlhorn/ngrx-wieder/issues/84)
+
 ### [10.0.1](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v10.0.0...v10.0.1) (2023-01-04)
 
 ## [10.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v9.0.0...v10.0.0) (2023-01-04)
