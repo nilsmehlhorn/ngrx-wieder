@@ -8,22 +8,7 @@
       "files": [
         "*.ts"
       ],
-      "parserOptions": {
-        "project": [
-          "projects/ngrx-wieder/tsconfig.lib.json",
-          "projects/ngrx-wieder/tsconfig.spec.json"
-        ],
-        "createDefaultProgram": true
-      },
       "rules": {
-        "@angular-eslint/component-selector": [
-          "error",
-          {
-            "type": "element",
-            "prefix": "lib",
-            "style": "kebab-case"
-          }
-        ],
         "@angular-eslint/directive-selector": [
           "error",
           {
@@ -32,19 +17,14 @@
             "style": "camelCase"
           }
         ],
-        "@typescript-eslint/explicit-member-accessibility": [
-          "off",
+        "@angular-eslint/component-selector": [
+          "error",
           {
-            "accessibility": "explicit"
+            "type": "element",
+            "prefix": "lib",
+            "style": "kebab-case"
           }
-        ],
-        "arrow-parens": [
-          "off",
-          "always"
-        ],
-        "import/order": "off",
-        "@typescript-eslint/semi": "off",
-        "@typescript-eslint/quotes": "off"
+        ]
       }
     },
     {

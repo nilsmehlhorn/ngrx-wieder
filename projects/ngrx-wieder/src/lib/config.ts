@@ -1,5 +1,5 @@
 import { Action, ActionReducer } from "@ngrx/store";
-import { Patch, PatchListener } from "immer";
+import { PatchListener } from "immer";
 
 /**
  * Reducer extension for capturing patches from immer.
