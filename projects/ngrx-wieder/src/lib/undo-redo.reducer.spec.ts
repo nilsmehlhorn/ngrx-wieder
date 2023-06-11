@@ -42,7 +42,7 @@ const test = (
           },
         ],
         inversePatches: [
-          { op: "replace", path: ["todos", "length"], value: 0 },
+          { op: "remove", path: ["todos", 0] },
         ],
       },
       actions: [{ type: addTodo.type }],
@@ -84,7 +84,7 @@ const test = (
               },
             ],
             inversePatches: [
-              { op: "replace", path: ["todos", "length"], value: 0 },
+              { op: "remove", path: ["todos", 0] },
             ],
           },
           actions: [{ type: addTodo.type, id, text } as Action],

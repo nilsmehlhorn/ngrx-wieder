@@ -1,5 +1,5 @@
 import { createAction, props, union } from "@ngrx/store";
-import produce, { PatchListener } from "immer";
+import { produce, PatchListener } from "immer";
 import {
   initialUndoRedoState,
   undoRedo,
