@@ -5,7 +5,7 @@
 [![codecov-badge](https://codecov.io/gh/nilsmehlhorn/ngrx-wieder/branch/master/graph/badge.svg)](https://codecov.io/gh/nilsmehlhorn/ngrx-wieder)
 
 ngrx-wieder is a lightweight yet configurable solution for implementing undo-redo in Angular apps on top of [NgRx](https://ngrx.io/).
-It's based on [immer](https://immerjs.github.io/immer/docs/introduction) hence the name wieder (German for: again)
+It's based on [immer](https://immerjs.github.io/immer/) hence the name wieder (German for: again)
 
 ⚡ [Example](https://github.com/nilsmehlhorn/ngrx-wieder-example) ([Demo](https://stackblitz.com/github/nilsmehlhorn/ngrx-wieder-example))
 
