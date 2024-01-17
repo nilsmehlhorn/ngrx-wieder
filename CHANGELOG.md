@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [12.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v11.0.0...v12.0.0) (2024-01-17)
+
 ## [11.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v10.0.1...v11.0.0) (2023-06-11)
 
 
