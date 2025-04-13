@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [13.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v11.0.0...v13.0.0) (2025-04-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* Angular 18
+
+### build
+
+* update to angular 18 ([#91](https://github.com/nilsmehlhorn/ngrx-wieder/issues/91)) ([0e0c0a5](https://github.com/nilsmehlhorn/ngrx-wieder/commit/0e0c0a583fbf5be4e352df822d4a10760863f501))
+
 ## [12.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v11.0.0...v12.0.0) (2024-01-17)
 
 ## [11.0.0](https://github.com/nilsmehlhorn/ngrx-wieder/compare/v10.0.1...v11.0.0) (2023-06-11)

@@ -1,6 +1,6 @@
 {
   "name": "ngrx-wieder",
-  "version": "12.0.0",
+  "version": "13.0.0",
   "author": "Nils Melhorn <mail@nils-mehlhorn.de> (https://nils-mehlhorn.de)",
   "description": "Lightweight undo-redo for NgRx",
   "homepage": "https://github.com/nilsmehlhorn/ngrx-wieder",
