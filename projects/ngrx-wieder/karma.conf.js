@@ -4,33 +4,33 @@
 module.exports = function (config) {
   config.set({
     basePath: '',
-    frameworks: ['jasmine', '@angular-devkit/build-angular'],
+    frameworks: ['jasmine'],
     plugins: [
       require('karma-jasmine'),
       require('karma-chrome-launcher'),
       require('karma-coverage'),
-      
     ],
     client: {
-      clearContext: false // leave Jasmine Spec Runner output visible in browser
+      jasmine: {
+        // you can add configuration options for Jasmine here
+        // the possible options are listed at https://jasmine.github.io/api/edge/Configuration.html
+        // for example, you can disable the random execution with `random: false`
+        // or set a specific seed with `seed: 4321`
+      },
     },
-    customLaunchers: {
-      ChromeHeadlessNoSandbox: {
-        base: 'ChromeHeadless',
-        flags: ['--no-sandbox']
-      }
+    jasmineHtmlReporter: {
+      suppressAll: true // removes the duplicated traces
     },
     coverageReporter: {
-      type: 'lcov',
-      subdir: '.'
+      dir: require('path').join(__dirname, '../../coverage/ngrx-wieder'),
+      subdir: '.',
+      reporters: [
+        { type: 'text-summary' },
+        { type: 'lcov' }
+      ]
     },
-    reporters: ['progress', 'coverage'],
-    port: 9876,
-    colors: true,
-    logLevel: config.LOG_INFO,
-    autoWatch: true,
-    browsers: ['ChromeHeadlessNoSandbox'],
-    singleRun: false,
+    reporters: ['progress'],
+    browsers: ['Chrome'],
     restartOnFileChange: true
   });
 };
