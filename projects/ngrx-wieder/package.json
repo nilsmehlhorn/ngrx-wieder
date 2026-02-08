@@ -22,10 +22,10 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@angular/common": "^20.0.0",
-    "@angular/core": "^20.0.0",
-    "@ngrx/store": "^20.0.0",
-    "immer": "6.X - 10.X"
+    "@angular/common": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "@ngrx/store": "^21.0.0",
+    "immer": "6.X - 11.X"
   },
   "dependencies": {
     "tslib": "^2.0.0"
