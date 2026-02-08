@@ -30,7 +30,13 @@ module.exports = function (config) {
       ]
     },
     reporters: ['progress'],
-    browsers: ['Chrome'],
+    customLaunchers: {
+      ChromeHeadlessNoSandbox: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox']
+      }
+    },
+    browsers: ['ChromeHeadlessNoSandbox'],
     restartOnFileChange: true
   });
 };
