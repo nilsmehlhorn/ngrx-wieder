@@ -1,4 +1,4 @@
-import { Action, ActionReducer } from "@ngrx/store";
+import { ActionReducer } from "@ngrx/store";
 import {
   createOnReducer,
   createSwitchReducer,
@@ -10,7 +10,7 @@ import {
   TestState,
 } from "./test-util/segmented-store";
 
-const test = (createReducer: () => ActionReducer<TestState, Action>) => {
+const test = (createReducer: () => ActionReducer<TestState>) => {
   it("should undo by segmentation", () => {
     const reducer = createReducer();
     let state = reducer(initialState, nameChange({ name: "Bill 2" }));

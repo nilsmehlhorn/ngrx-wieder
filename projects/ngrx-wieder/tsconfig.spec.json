@@ -14,8 +14,5 @@
     "**/*.spec.ts",
     "src/lib/test-util/**/*.ts",
     "**/*.d.ts"
-  ],
-  "angularCompilerOptions": {
-    "strictTemplates": false
-  }
+  ]
 }

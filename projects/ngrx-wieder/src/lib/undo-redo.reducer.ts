@@ -1,39 +1,51 @@
 import {
   Action,
   ActionCreator,
-  ActionReducer, ReducerTypes
+  ActionReducer,
+  ReducerTypes,
 } from "@ngrx/store";
 import { applyPatches, enablePatches, PatchListener, produce } from "immer";
 import {
   defaultConfig,
   PatchActionReducer,
   Segmenter,
-  WiederConfig
+  WiederConfig,
 } from "./config";
 import {
   DEFAULT_KEY,
   History,
   HistoryKey,
   Step,
-  UndoRedoState
+  UndoRedoState,
 } from "./undo-redo.state";
+
+// NgRx's `on` reducers accept action subtypes, whereas this wrapper dispatches
+// generic actions by type. Method bivariance keeps those `on` results assignable.
+type ReducerDefinition<S> = Omit<
+  ReducerTypes<S, ActionCreator[]>,
+  "reducer"
+> & {
+  reducer: {
+    bivarianceHack(state: S, action: Action): S;
+  }["bivarianceHack"];
+};
 
 export interface UndoRedo {
   createUndoRedoReducer: <S extends UndoRedoState, A extends Action = Action>(
     initialState: S,
-    ...ons: ReducerTypes<S, ActionCreator[]>[]
+    ...ons: ReducerDefinition<S>[]
   ) => ActionReducer<S, A>;
   createSegmentedUndoRedoReducer: <
     S extends UndoRedoState,
-    A extends Action = Action
+    A extends Action = Action,
   >(
     initialState: S,
     segmenter: Segmenter<S>,
-    ...ons: ReducerTypes<S, ActionCreator[]>[]
+    ...ons: ReducerDefinition<S>[]
   ) => ActionReducer<S, A>;
   wrapReducer: <S extends UndoRedoState, A extends Action = Action>(
     reducer: PatchActionReducer<S, A>,
-    segmenter?: Segmenter<S>
+    segmenter?: Segmenter<S>,
   ) => ActionReducer<S, A>;
 }
 
@@ -42,12 +54,12 @@ export const undoRedo = (config: WiederConfig = {}): UndoRedo => {
   return {
     createUndoRedoReducer: <S extends UndoRedoState>(
       initialState: S,
-      ...ons: ReducerTypes<S, ActionCreator[]>[]
+      ...ons: ReducerDefinition<S>[]
     ) => create(initialState, ons, config),
     createSegmentedUndoRedoReducer: <S extends UndoRedoState>(
       initialState: S,
       segmenter: Segmenter<S>,
-      ...ons: ReducerTypes<S, ActionCreator[]>[]
+      ...ons: ReducerDefinition<S>[]
     ) => create(initialState, ons, config, segmenter),
     wrapReducer: (reducer, segmenter) => wrap(reducer, config, segmenter),
   };
@@ -55,11 +67,11 @@ export const undoRedo = (config: WiederConfig = {}): UndoRedo => {
 
 const create = <S extends UndoRedoState, A extends Action = Action>(
   initialState: S,
-  ons: ReducerTypes<S, ActionCreator[]>[],
+  ons: ReducerDefinition<S>[],
   config: WiederConfig,
-  segmenter?: Segmenter<S>
-) => {
-  const map: { [key: string]: ActionReducer<S, A> } = {};
+  segmenter?: Segmenter<S>,
+): ActionReducer<S, A> => {
+  const map: { [key: string]: (state: S, action: Action) => S } = {};
   for (const on of ons) {
     for (const type of on.types) {
       if (map[type]) {
@@ -71,25 +83,25 @@ const create = <S extends UndoRedoState, A extends Action = Action>(
       }
     }
   }
-  const reducer = ((
+  const reducer: PatchActionReducer<S> = (
     state: S = initialState,
-    action: A,
-    listener: PatchListener
+    action: Action,
+    listener?: PatchListener,
   ) => {
     const r = map[action.type];
     if (r) {
       return produce(state, (draft: S) => r(draft, action), listener);
     }
     return state;
-  }) as PatchActionReducer<S, A>;
+  };
   return wrap(reducer, config, segmenter);
 };
 
 const wrap = <S extends UndoRedoState, A extends Action = Action>(
   reducer: PatchActionReducer<S, A>,
   config: WiederConfig,
-  segmenter: Segmenter<S> = () => DEFAULT_KEY
-) => {
+  segmenter: Segmenter<S> = () => DEFAULT_KEY,
+): ActionReducer<S, A> => {
   const {
     allowedActionTypes,
     mergeActionTypes,
@@ -125,12 +137,12 @@ const wrap = <S extends UndoRedoState, A extends Action = Action>(
   const segmentationKey = (state: S, action?: A): HistoryKey =>
     (action && segmentationOverride(action)) || segmenter(state);
 
-  return (state: S, action: A): S => {
+  return (state: S | undefined, action: A): S => {
     if (!state) {
       return reducer(state, action);
     }
     const key = segmentationKey(state, action);
-    const history = state.histories[key] || {
+    const history = state.histories[key] ?? {
       undoable: [],
       undone: [],
       mergeBroken: false,
@@ -201,7 +213,7 @@ const wrap = <S extends UndoRedoState, A extends Action = Action>(
       }
       default: {
         let listener: PatchListener | undefined;
-        let patchedHistory: History;
+        let patchedHistory: History | undefined;
         if (isUndoable(action)) {
           listener = (patches, inversePatches) => {
             const [lastStep, ...otherSteps] = history.undoable;
@@ -254,7 +266,7 @@ const wrap = <S extends UndoRedoState, A extends Action = Action>(
               ...state.histories,
               [key]: patchedHistory,
             },
-          };
+          } as S;
         }
         return nextState;
       }

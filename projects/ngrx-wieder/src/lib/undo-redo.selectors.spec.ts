@@ -140,13 +140,16 @@ describe("UndoRedo Selectors", () => {
       },
     };
 
-    let selectors: ReturnType<typeof createHistorySelectors>;
-
-    beforeEach(() => {
-      selectors = createHistorySelectors<
+    const createSegmentedSelectors = () =>
+      createHistorySelectors<
         SegmentedStore.TestState,
         SegmentedStore.TestState
       >(identity, SegmentedStore.segmenter);
+
+    let selectors: ReturnType<typeof createSegmentedSelectors>;
+
+    beforeEach(() => {
+      selectors = createSegmentedSelectors();
     });
 
     it("should select active history", () => {

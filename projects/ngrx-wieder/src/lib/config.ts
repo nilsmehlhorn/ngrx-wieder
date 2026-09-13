@@ -1,14 +1,11 @@
-import { Action, ActionReducer } from "@ngrx/store";
+import { Action } from "@ngrx/store";
 import { PatchListener } from "immer";
 
 /**
  * Reducer extension for capturing patches from immer.
  */
-export interface PatchActionReducer<S, A extends Action = Action>
-  extends ActionReducer<S, A> {
-  (state: S | undefined, action: A, patchListener: PatchListener):
-    | S
-    | undefined;
+export interface PatchActionReducer<S, A extends Action = Action> {
+  (state: S | undefined, action: A, patchListener?: PatchListener): S;
 }
 
 /**
@@ -72,7 +69,7 @@ export interface WiederConfig {
   trackActionPayload?: boolean | ((action: Action) => boolean);
 }
 
-export const defaultConfig: WiederConfig = {
+export const defaultConfig: Required<WiederConfig> = {
   allowedActionTypes: [],
   mergeActionTypes: [],
   mergeRules: {},

@@ -47,6 +47,7 @@
     "cpx": "^1.5.0",
     "eslint": "^10.9.1",
     "husky": "^4.3.8",
+    "istanbul-lib-instrument": "^6.0.3",
     "jasmine-core": "~5.10.0",
     "jasmine-spec-reporter": "~7.0.0",
     "karma": "~6.4.4",
