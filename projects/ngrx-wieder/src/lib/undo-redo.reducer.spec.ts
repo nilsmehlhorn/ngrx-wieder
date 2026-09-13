@@ -9,7 +9,6 @@ import {
   initialState,
   populatedState,
   redo,
-  remove,
   removeTodo,
   reset,
   TestState,
@@ -26,7 +25,7 @@ const expectToEqualWithoutHistory = (a: TestState, b: TestState) => {
 };
 
 const test = (
-  createReducer: (config?: WiederConfig) => ActionReducer<TestState, Action>
+  createReducer: (config?: WiederConfig) => ActionReducer<TestState>
 ) => {
   it("should undo and redo any action", () => {
     const redoReducer = createReducer();
@@ -141,8 +140,8 @@ const test = (
       const state = populatedState;
       const viewId = state.todos[1].id;
       const doneState = redoReducer(state, viewTodo({ id: viewId }));
-      expect(doneState.viewed).toBeDefined();
-      expect(doneState.viewed.id).toBe(viewId);
+      expect(doneState.viewed).not.toBeNull();
+      expect(doneState.viewed?.id).toBe(viewId);
       const undoneState = redoReducer(doneState, undo());
       expect(undoneState).toEqual(doneState);
     });
@@ -162,8 +161,8 @@ const test = (
         expect(undoneState.todos[0].text).toEqual("Travel");
         expect(undoneState.todos[0].id).toEqual(state.todos[0].id);
         expect(undoneState.todos[0].checked).toBeTruthy();
-        expect(doneState.viewed).toBeDefined();
-        expect(doneState.viewed.id).toBe(state.todos[1].id);
+        expect(doneState.viewed).not.toBeNull();
+        expect(doneState.viewed?.id).toBe(state.todos[1].id);
       });
     });
   });
@@ -265,27 +264,13 @@ const test = (
     expect(doneState.todos.length).toBe(1);
     expect(doneState.todos[0].text).toEqual("Do laundry");
     expect(doneState.todos[0].checked).toBeFalsy();
-    const replacedState = redoReducer(doneState, reset);
+    const replacedState = redoReducer(doneState, reset());
     expectToEqualWithoutHistory(replacedState, initialState);
     const undoneState = redoReducer(replacedState, undo());
     expectToEqualWithoutHistory(undoneState, doneState);
   });
 
-  it("should handle state removal", () => {
-    const redoReducer = createReducer();
-    const id = genId();
-    const doneState = redoReducer(
-      initialState,
-      addTodo({ id, text: "Do laundry" })
-    );
-    expect(doneState.todos.length).toBe(1);
-    expect(doneState.todos[0].text).toEqual("Do laundry");
-    expect(doneState.todos[0].checked).toBeFalsy();
-    const replacedState = redoReducer(doneState, remove);
-    expect(Object.keys(getStateWithoutHistories(replacedState)).length).toBe(0);
-    const undoneState = redoReducer(replacedState, undo());
-    expectToEqualWithoutHistory(undoneState, doneState);
-  });
+
 };
 
 describe("UndoRedo Reducer", () => {

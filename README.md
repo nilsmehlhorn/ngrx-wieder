@@ -51,7 +51,11 @@ import { undoRedo, produceOn } from "ngrx-wieder";
 
 // initialize ngrx-wieder with custom config
 const { createUndoRedoReducer } = undoRedo({
-  allowedActionTypes: [Actions.addTodo, Actions.removeTodo, Actions.toggleTodo],
+  allowedActionTypes: [
+    Actions.addTodo.type,
+    Actions.removeTodo.type,
+    Actions.toggleTodo.type,
+  ],
 });
 
 export const reducer = createUndoRedoReducer(
@@ -62,7 +66,9 @@ export const reducer = createUndoRedoReducer(
   }),
   on(Actions.toggleTodo, (state, { id }) => {
     const todo = state.todos.find((t) => t.id === id);
-    todo.checked = !todo.checked;
+    if (todo) {
+      todo.checked = !todo.checked;
+    }
     return state;
   }),
   produceOn(Actions.removeTodo, (state, { id }) => {
@@ -124,7 +130,7 @@ import * as fromTodo from "../todo.selectors";
   selector: "my-undo-redo",
   template: `
     <button (click)="undo()" [disabled]="!(canUndo$ | async)">Undo</button>
-    <button (click)="undo()" [disabled]="!(canRedo$ | async)">Redo</button>
+    <button (click)="redo()" [disabled]="!(canRedo$ | async)">Redo</button>
   `,
 })
 export class UndoRedoComponent {
@@ -207,16 +213,18 @@ const reducer = (state: State, action: Actions): State =>
 **After**
 
 ```ts
+import { Action } from "@ngrx/store";
 import { produce, PatchListener } from "immer";
 
 const reducer = (
-  state: State,
-  action: Actions,
+  state = initialState,
+  incomingAction: Action,
   patchListener?: PatchListener
 ): State =>
   produce(
     state,
     (nextState) => {
+      const action = incomingAction as Actions;
       switch (
         action.type
         /* action handling */
@@ -231,18 +239,23 @@ Next you'll configure the undo-redo behaviour by instantiating `undoRedo` and wr
 your custom reducer with the `wrapReducer` function:
 
 ```ts
+import { Action } from "@ngrx/store";
 import { undoRedo } from "ngrx-wieder";
 
 // initialize ngrx-wieder
 const { wrapReducer } = undoRedo({
-  allowedActionTypes: [Actions.addTodo, Actions.removeTodo, Actions.toggleTodo],
+  allowedActionTypes: [
+    Actions.addTodo.type,
+    Actions.removeTodo.type,
+    Actions.toggleTodo.type,
+  ],
 });
 
 // wrap reducer inside meta-reducer to make it undoable
 const undoableReducer = wrapReducer(reducer);
 
 // wrap into exported function to keep Angular AOT working
-export function myReducer(state = initialState, action) {
+export function myReducer(state = initialState, action: Action) {
   return undoableReducer(state, action);
 }
 ```
@@ -260,7 +273,7 @@ interface State {
 }
 ```
 
-Now, when the user is viewing one document, he probably doesn't want to undo changes in a different one. In order to make this work, you need to inform ngrx-wieder about your segmentation by using `createSegmentedUndoRedoReducer` providing a segmenter. Note that any actions that change the result of the segmenter must not be undoable (here it's `documentSwitch`). Moreover, when tracking is active, `canUndo` and `canRedo` will reflect the active undo-redo stack.
+Now, when the user is viewing one document, he probably doesn't want to undo changes in a different one. In order to make this work, you need to inform ngrx-wieder about your segmentation by using `createSegmentedUndoRedoReducer` providing a segmenter. Note that any actions that change the result of the segmenter must not be undoable (here it's `documentSwitch`).
 
 ```typescript
 // helper function for manipulating active document in reducer
@@ -269,7 +282,6 @@ const activeDocument = (state: TestState): Document =>
 
 const { createSegmentedUndoRedoReducer } = undoRedo({
   allowedActionTypes: [nameChange.type],
-  track: true,
 });
 
 const reducer = createSegmentedUndoRedoReducer(
@@ -287,9 +299,12 @@ const reducer = createSegmentedUndoRedoReducer(
 When you're using a switch-based reducer, simply pass the segmenter as a second argument to `wrapReducer`:
 
 ```typescript
+import { Action } from "@ngrx/store";
+
 const {wrapReducer} = undoRedo({...})
-const reducer = (state = initialState, action: Actions, listener?: PatchListener): State =>
+const reducer = (state = initialState, incomingAction: Action, listener?: PatchListener): State =>
     produce(state, next => {
+        const action = incomingAction as Actions
         switch (action.type) {
           case nameChange.type:
             activeDocument(next).name = action.name

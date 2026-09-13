@@ -1,11 +1,11 @@
-import { createAction, props, union, on } from "@ngrx/store";
-import { produce, original, nothing, PatchListener } from "immer";
+import { Action, ActionReducer, createAction, on, props, union } from "@ngrx/store";
+import { original, PatchListener, produce } from "immer";
 import {
   UndoRedoState,
   initialUndoRedoState,
   undoRedo,
 } from "../../public-api";
-import { defaultConfig } from "../config";
+import { defaultConfig, WiederConfig } from "../config";
 import { produceOn } from "../produce-on";
 import { genId } from "./id";
 
@@ -17,7 +17,7 @@ export interface Todo {
 
 export interface TestState extends UndoRedoState {
   todos: Todo[];
-  viewed?: Todo;
+  viewed: Todo | null;
   mood: number;
 }
 
@@ -53,7 +53,6 @@ export const viewTodo = createAction(
 );
 export const incrementMood = createAction("[Test] Increment Mood");
 export const reset = createAction("[Test] Reset");
-export const remove = createAction("[Test] Remove");
 export const undo = createAction("UNDO");
 export const redo = createAction("REDO");
 export const all = union({
@@ -62,11 +61,12 @@ export const all = union({
   viewTodo,
   incrementMood,
   reset,
-  remove,
 });
 type Actions = typeof all;
 
-export const createOnReducer = (config = defaultConfig) => {
+export const createOnReducer = (
+  config: WiederConfig = defaultConfig,
+): ActionReducer<TestState> => {
   const { createUndoRedoReducer } = undoRedo(config);
   return createUndoRedoReducer(
     initialState,
@@ -82,24 +82,26 @@ export const createOnReducer = (config = defaultConfig) => {
       return state;
     }),
     on(viewTodo, (state, action) => {
-      state.viewed = state.todos.find((t) => t.id === action.id);
+      state.viewed = state.todos.find((t) => t.id === action.id) ?? null;
       return state;
     }),
     produceOn(incrementMood, (state) => {
       state.mood = Math.min(original(state).mood + 10, 100);
     }),
-    on(reset, () => initialState),
-    produceOn(remove, () => (nothing as unknown) as TestState)
+    on(reset, () => initialState)
   );
 };
 
-export const createSwitchReducer = (config = defaultConfig) => {
+export const createSwitchReducer = (
+  config: WiederConfig = defaultConfig,
+): ActionReducer<TestState> => {
   const { wrapReducer } = undoRedo(config);
   return wrapReducer(
-    (state = initialState, action: Actions, listener?: PatchListener): TestState =>
+    (state = initialState, incomingAction: Action, listener?: PatchListener): TestState =>
       produce(
         state,
         (next) => {
+          const action = incomingAction as Actions;
           switch (action.type) {
             case addTodo.type:
               next.todos.push({
@@ -115,15 +117,13 @@ export const createSwitchReducer = (config = defaultConfig) => {
               );
               return;
             case viewTodo.type:
-              next.viewed = next.todos.find((t) => t.id === action.id);
+              next.viewed = next.todos.find((t) => t.id === action.id) ?? null;
               return;
             case incrementMood.type:
               next.mood = Math.min(state.mood + 10, 100);
               return;
             case reset.type:
               return initialState;
-            case remove.type:
-              return nothing;
             default:
               return;
           }

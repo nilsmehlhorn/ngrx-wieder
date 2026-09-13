@@ -1,5 +1,5 @@
 import { TestBed } from "@angular/core/testing";
-import { ActionReducer, Action, StoreModule, Store } from "@ngrx/store";
+import { ActionReducer, StoreModule, Store } from "@ngrx/store";
 import {
   TestState,
   initialState,
@@ -14,7 +14,7 @@ interface RootState {
   };
 }
 
-const test = (createReducer: () => ActionReducer<TestState, Action>) => {
+const test = (createReducer: () => ActionReducer<TestState>) => {
   let store: Store<RootState>;
   beforeEach(() => {
     const rootReducers = {

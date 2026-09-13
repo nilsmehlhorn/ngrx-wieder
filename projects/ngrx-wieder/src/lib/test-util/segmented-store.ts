@@ -1,4 +1,4 @@
-import { createAction, props, union } from "@ngrx/store";
+import { Action, ActionReducer, createAction, props, union } from "@ngrx/store";
 import { produce, PatchListener } from "immer";
 import {
   initialUndoRedoState,
@@ -72,12 +72,15 @@ export const config: WiederConfig = {
     nameChangeForDoc.type,
     contentChange.type,
   ],
-  segmentationOverride: (action) => action[docOverrideProp],
+  segmentationOverride: (action) =>
+    docOverrideProp in action && typeof action[docOverrideProp] === "string"
+      ? action[docOverrideProp]
+      : undefined,
 };
 
 export const segmenter = (state: TestState) => state.activeDocument;
 
-export const createOnReducer = () => {
+export const createOnReducer = (): ActionReducer<TestState> => {
   const { createSegmentedUndoRedoReducer } = undoRedo(config);
   return createSegmentedUndoRedoReducer(
     initialState,
@@ -97,17 +100,18 @@ export const createOnReducer = () => {
   );
 };
 
-export const createSwitchReducer = () => {
+export const createSwitchReducer = (): ActionReducer<TestState> => {
   const { wrapReducer } = undoRedo(config);
   return wrapReducer(
     (
       state = initialState,
-      action: Actions,
+      incomingAction: Action,
       listener?: PatchListener
     ): TestState =>
       produce(
         state,
         (next) => {
+          const action = incomingAction as Actions;
           switch (action.type) {
             case nameChange.type:
               activeDocument(next).name = action.name;
